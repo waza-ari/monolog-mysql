@@ -6,7 +6,7 @@ It can log text messages to a specific table, and creates the table automaticall
 The class further allows to dynamically add extra attributes, which are stored in a separate database field, and can be used for later analyzing and sorting.
 
 = Installation
-monolog-mysql is availaible via composer. Just add the following line to your required section in composer.json and do a ´php composer.phar update`.
+monolog-mysql is availaible via composer. Just add the following line to your required section in composer.json and do a `php composer.phar update`.
 
 ```
 "wazaari/monolog-mysql": ">1.0.0"
