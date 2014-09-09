@@ -1,2 +1,5 @@
 # Created by .gitignore support plugin (hsz.mobi)
 .idea
+vendor
+atlassian-ide-plugin.xml
+composer.lock
