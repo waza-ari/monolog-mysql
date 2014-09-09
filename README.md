@@ -12,7 +12,7 @@ monolog-mysql is availaible via composer. Just add the following line to your re
 "wazaari/monolog-mysql": ">1.0.0"
 ```
 
-= Usage
+# Usage
 Just use this as any other Monolog Handler, push it to the stack of your Monolog Logger instance. The Handler however needs some parameters:
 
 - **$pdo** PDO Instance of your database. Pass along the PDO instantiation of your database connection with your database selected.
@@ -21,7 +21,7 @@ Just use this as any other Monolog Handler, push it to the stack of your Monolog
 - **$level** can be any of the standard Monolog logging levels. Use Monologs statically defined contexts. _Defaults to Logger::DEBUG_
 - **$bubble** _Defaults to true_
 
-= Examples
+# Examples
 Given that $pdo is your database instance, you could use the class as follows:
 
 ```php
