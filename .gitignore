@@ -3,3 +3,4 @@
 vendor
 atlassian-ide-plugin.xml
 composer.lock
+.gitignore

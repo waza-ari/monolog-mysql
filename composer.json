@@ -14,8 +14,6 @@
         "monolog/monolog": ">1.4.0"
     },
     "autoload": {
-        "psr-0": {
-            "MySQLHandler": "src"
-        }
+        "psr-4": {"Monolog\\": "src/Monolog"}
     }
 }
