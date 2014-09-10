@@ -1,6 +1,6 @@
 <?php
 
-namespace Wazaari\MysqlHandler;
+namespace wazaari\MysqlHandler;
 
 use Monolog\Logger;
 use Monolog\Handler\AbstractProcessingHandler;
@@ -12,7 +12,7 @@ use PDOStatement;
  * to write records in a MySQL table
  *
  * Class MySQLHandler
- * @package Wazaari\MysqlHandler
+ * @package wazaari\MysqlHandler
  */
 class MySQLHandler extends AbstractProcessingHandler {
 
