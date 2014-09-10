@@ -11,7 +11,7 @@
         }
     ],
     "require": {
-        "monolog/monolog": "1.4.0"
+        "monolog/monolog": ">1.4.0"
     },
     "autoload": {
         "psr-0": {
