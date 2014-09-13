@@ -122,6 +122,6 @@ class MySQLHandler extends AbstractProcessingHandler {
             'level' => $record['level'],
             'message' => $record['formatted'],
             'time' => $record['datetime']->format('U'),
-        ], $record['extra']));
+        ], $record['context']));
     }
 }
