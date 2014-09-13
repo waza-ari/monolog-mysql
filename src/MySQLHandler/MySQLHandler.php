@@ -115,13 +115,15 @@ class MySQLHandler extends AbstractProcessingHandler {
             $this->initialize();
         }
 
-        //'extra' contains the array
+        //'context' contains the array
 
-        $this->statement->execute(array_merge([
+        $contentArray = array_merge(array(
             'channel' => $record['channel'],
             'level' => $record['level'],
             'message' => $record['formatted'],
-            'time' => $record['datetime']->format('U'),
-        ], $record['context']));
+            'time' => $record['datetime']->format('U')
+        ), $record['context']);
+
+        $this->statement->execute($contentArray);
     }
 }
