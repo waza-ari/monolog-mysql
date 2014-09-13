@@ -120,7 +120,7 @@ class MySQLHandler extends AbstractProcessingHandler {
         $contentArray = array_merge(array(
             'channel' => $record['channel'],
             'level' => $record['level'],
-            'message' => $record['formatted'],
+            'message' => $record['message'],
             'time' => $record['datetime']->format('U')
         ), $record['context']);
 
