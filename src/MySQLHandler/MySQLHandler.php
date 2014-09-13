@@ -1,6 +1,6 @@
 <?php
 
-namespace wazaari;
+namespace MySQLHandler;
 
 use Monolog\Logger;
 use Monolog\Handler\AbstractProcessingHandler;
