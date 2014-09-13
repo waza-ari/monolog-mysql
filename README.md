@@ -25,8 +25,11 @@ Just use this as any other Monolog Handler, push it to the stack of your Monolog
 Given that $pdo is your database instance, you could use the class as follows:
 
 ```php
+//Import class
+use MySQLHandler\MySQLHandler;
+
 //Create MysqlHandler
-$mySQLHandler = new MySQLHandler($pdo, "log", array(' username', 'userid'), Logger::DEBUG);
+$mySQLHandler = new MySQLHandler($pdo, "log", array('username', 'userid'), \Monolog\Logger::DEBUG);
 
 //Create logger
 $logger = new \Monolog\Logger($context);
