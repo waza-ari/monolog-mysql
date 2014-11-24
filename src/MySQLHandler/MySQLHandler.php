@@ -71,7 +71,7 @@ class MySQLHandler extends AbstractProcessingHandler {
         );
 
         //Read out actual columns
-        $q = $this->pdo->prepare("DESCRIBE `'.$this->table.'`;");
+        $q = $this->pdo->prepare('DESCRIBE `'.$this->table.'`;');
         $q->execute();
         $actualFields = $q->fetchAll(PDO::FETCH_COLUMN);
 
