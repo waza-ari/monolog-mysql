@@ -71,12 +71,15 @@ class MySQLHandler extends AbstractProcessingHandler {
         );
 
         //Read out actual columns
-        $q = $this->pdo->prepare('DESCRIBE `'.$this->table.'`;');
-        $q->execute();
-        $actualFields = $q->fetchAll(PDO::FETCH_COLUMN);
+        $actualFields = array();
+        $rs = $this->pdo->query('SELECT * FROM `'.$this->table.'` LIMIT 0');
+        for ($i = 0; $i < $rs->columnCount(); $i++) {
+            $col = $rs->getColumnMeta($i);
+            $actualFields[] = $col['name'];
+        }
 
         //Calculate changed entries
-        $removedColumns = array_diff($actualFields, $this->additionalFields);
+        $removedColumns = array_diff($actualFields, $this->additionalFields, array('channel', 'level', 'message', 'time'));
         $addedColumns = array_diff($this->additionalFields, $actualFields);
 
         //Remove columns
@@ -116,7 +119,6 @@ class MySQLHandler extends AbstractProcessingHandler {
         }
 
         //'context' contains the array
-
         $contentArray = array_merge(array(
             'channel' => $record['channel'],
             'level' => $record['level'],
