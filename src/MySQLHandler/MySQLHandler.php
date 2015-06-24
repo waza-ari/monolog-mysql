@@ -54,10 +54,16 @@ class MySQLHandler extends AbstractProcessingHandler {
      * @param bool|int $level           Debug level which this handler should store
      * @param bool $bubble
      */
-    public function __construct(PDO $pdo, $table, $additionalFields = array(), $level = Logger::DEBUG, $bubble = true) {
-        $this->pdo = $pdo;
-        $this->additionalFields = $additionalFields;
-        $this->table = $table;
+    public function __construct(PDO $pdo = null, $table = null, $additionalFields = array(), $level = Logger::DEBUG, $bubble = true) {
+    	if(!is_null($pdo)) {
+        	$this->pdo = $pdo;
+        }
+        if(!is_null($additionalFields)) {
+        	$this->additionalFields = $additionalFields;
+        }
+        if(!is_null($table)) {
+        	$this->table = $table;
+        }
         parent::__construct($level, $bubble);
     }
 
