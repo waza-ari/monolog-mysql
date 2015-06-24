@@ -58,12 +58,6 @@ class MySQLHandler extends AbstractProcessingHandler {
     	if(!is_null($pdo)) {
         	$this->pdo = $pdo;
         }
-        if(!is_null($additionalFields)) {
-        	$this->additionalFields = $additionalFields;
-        }
-        if(!is_null($table)) {
-        	$this->table = $table;
-        }
         parent::__construct($level, $bubble);
     }
 
