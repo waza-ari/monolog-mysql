@@ -24,7 +24,7 @@ class MySQLHandler extends AbstractProcessingHandler {
     /**
      * @var PDO pdo object of database connection
      */
-    private $pdo;
+    protected $pdo;
 
     /**
      * @var PDOStatement statement to insert a new record
@@ -34,7 +34,7 @@ class MySQLHandler extends AbstractProcessingHandler {
     /**
      * @var string the table to store the logs in
      */
-    private $table = 'logs';
+    protected $table = 'logs';
 
     /**
      * @var string[] additional fields to be stored in the database
@@ -43,7 +43,7 @@ class MySQLHandler extends AbstractProcessingHandler {
      * is expected along the message, and further the database needs to have these fields
      * as the values are stored in the column name $field.
      */
-    private $additionalFields = array();
+    protected $additionalFields = array();
 
     /**
      * Constructor of this class, sets the PDO and calls parent constructor
