@@ -91,7 +91,7 @@ class MySQLHandler extends AbstractProcessingHandler {
 
         //Add columns
         if (!empty($addedColumns)) foreach ($addedColumns as $c) {
-            $this->pdo->exec('ALTER TABLE `'.$this->table.'` add `'.$c.'` VARCHAR(200) NULL DEFAULT NULL;');
+            $this->pdo->exec('ALTER TABLE `'.$this->table.'` add `'.$c.'` TEXT NULL DEFAULT NULL;');
         }
 
         //Prepare statement
