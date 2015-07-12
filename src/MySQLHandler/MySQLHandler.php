@@ -24,7 +24,7 @@ class MySQLHandler extends AbstractProcessingHandler {
     /**
      * @var PDO pdo object of database connection
      */
-    private $pdo;
+    protected $pdo;
 
     /**
      * @var PDOStatement statement to insert a new record
@@ -54,10 +54,12 @@ class MySQLHandler extends AbstractProcessingHandler {
      * @param bool|int $level           Debug level which this handler should store
      * @param bool $bubble
      */
-    public function __construct(PDO $pdo, $table, $additionalFields = array(), $level = Logger::DEBUG, $bubble = true) {
-        $this->pdo = $pdo;
-        $this->additionalFields = $additionalFields;
+    public function __construct(PDO $pdo = null, $table, $additionalFields = array(), $level = Logger::DEBUG, $bubble = true) {
+    	if(!is_null($pdo)) {
+        	$this->pdo = $pdo;
+        }
         $this->table = $table;
+        $this->additionalFields = $additionalFields;
         parent::__construct($level, $bubble);
     }
 
@@ -89,7 +91,7 @@ class MySQLHandler extends AbstractProcessingHandler {
 
         //Add columns
         if (!empty($addedColumns)) foreach ($addedColumns as $c) {
-            $this->pdo->exec('ALTER TABLE `'.$this->table.'` add `'.$c.'` VARCHAR(200) NULL DEFAULT NULL;');
+            $this->pdo->exec('ALTER TABLE `'.$this->table.'` add `'.$c.'` TEXT NULL DEFAULT NULL;');
         }
 
         //Prepare statement
