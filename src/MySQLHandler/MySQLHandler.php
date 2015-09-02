@@ -37,6 +37,11 @@ class MySQLHandler extends AbstractProcessingHandler {
     private $table = 'logs';
 
     /**
+     * @var array default fields that are stored in db
+     */
+    private $fields = array('channel', 'level', 'message', 'time');
+
+    /**
      * @var string[] additional fields to be stored in the database
      *
      * For each field $field, an additional context field with the name $field
@@ -44,6 +49,7 @@ class MySQLHandler extends AbstractProcessingHandler {
      * as the values are stored in the column name $field.
      */
     private $additionalFields = array();
+
 
     /**
      * Constructor of this class, sets the PDO and calls parent constructor
@@ -55,8 +61,8 @@ class MySQLHandler extends AbstractProcessingHandler {
      * @param bool $bubble
      */
     public function __construct(PDO $pdo = null, $table, $additionalFields = array(), $level = Logger::DEBUG, $bubble = true) {
-    	if(!is_null($pdo)) {
-        	$this->pdo = $pdo;
+        if(!is_null($pdo)) {
+            $this->pdo = $pdo;
         }
         $this->table = $table;
         $this->additionalFields = $additionalFields;
@@ -81,7 +87,7 @@ class MySQLHandler extends AbstractProcessingHandler {
         }
 
         //Calculate changed entries
-        $removedColumns = array_diff($actualFields, $this->additionalFields, array('channel', 'level', 'message', 'time'));
+        $removedColumns = array_diff($actualFields, $this->additionalFields, $this->fields);
         $addedColumns = array_diff($this->additionalFields, $actualFields);
 
         //Remove columns
@@ -94,16 +100,19 @@ class MySQLHandler extends AbstractProcessingHandler {
             $this->pdo->exec('ALTER TABLE `'.$this->table.'` add `'.$c.'` TEXT NULL DEFAULT NULL;');
         }
 
+        // merge default and additional field to one array
+        $this->fields = array_merge($this->fields, $this->additionalFields);
+
         //Prepare statement
         $columns = "";
         $fields = "";
-        foreach ($this->additionalFields as $f) {
+        foreach ($this->fields as $f) {
             $columns.= ", $f";
             $fields.= ", :$f";
         }
 
         $this->statement = $this->pdo->prepare(
-            'INSERT INTO `'.$this->table.'` (channel, level, message, time'.$columns.') VALUES (:channel, :level, :message, :time'.$fields.')'
+            'INSERT INTO `'.$this->table.'` (' .$columns . ') VALUES (' . $fields .')'
         );
 
         $this->initialized = true;
@@ -131,11 +140,18 @@ class MySQLHandler extends AbstractProcessingHandler {
 
         //'context' contains the array
         $contentArray = array_merge(array(
-            'channel' => $record['channel'],
-            'level' => $record['level'],
-            'message' => $record['message'],
-            'time' => $record['datetime']->format('U')
-        ), $record['context']);
+                                        'channel' => $record['channel'],
+                                        'level' => $record['level'],
+                                        'message' => $record['message'],
+                                        'time' => $record['datetime']->format('U')
+                                    ), $record['context']);
+
+        // unset array keys that are passed put not defined to be stored, to prevent sql errors
+        foreach($contentArray as $key => $context) {
+            if (! in_array($key, $this->fields)) {
+                unset($contentArray[$key]);
+            }
+        }
 
         $this->statement->execute($contentArray);
     }
