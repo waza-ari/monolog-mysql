@@ -103,19 +103,25 @@ class MySQLHandler extends AbstractProcessingHandler {
         // merge default and additional field to one array
         $this->fields = array_merge($this->fields, $this->additionalFields);
 
+        $this->initialized = true;
+    }
+
+    /**
+     * Prepare the sql statment depending on the fields that should be written to the database
+     */
+    private function prepareStatement()
+    {
         //Prepare statement
         $columns = "";
-        $fields = "";
+        $fields  = "";
         foreach ($this->fields as $f) {
-            $columns.= ", $f";
-            $fields.= ", :$f";
+            $columns .= ", $f";
+            $fields .= ", :$f";
         }
 
         $this->statement = $this->pdo->prepare(
-            'INSERT INTO `'.$this->table.'` (' .$columns . ') VALUES (' . $fields .')'
+            'INSERT INTO `' . $this->table . '` (' . $columns . ') VALUES (' . $fields . ')'
         );
-
-        $this->initialized = true;
     }
 
     /**
@@ -151,8 +157,17 @@ class MySQLHandler extends AbstractProcessingHandler {
             if (! in_array($key, $this->fields)) {
                 unset($contentArray[$key]);
             }
+
+            if ($context === null) {
+                unset($contentArray[$key]);
+                unset($this->fields[$key]);
+            }
         }
+
+        $this->prepareStatement();
 
         $this->statement->execute($contentArray);
     }
+
+
 }
