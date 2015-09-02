@@ -114,7 +114,13 @@ class MySQLHandler extends AbstractProcessingHandler {
         //Prepare statement
         $columns = "";
         $fields  = "";
-        foreach ($this->fields as $f) {
+        foreach ($this->fields as $key => $f) {
+            if ($key == 0) {
+                $columns .= "$f";
+                $fields .= ":$f";
+                continue;
+            }
+
             $columns .= ", $f";
             $fields .= ", :$f";
         }
@@ -123,6 +129,7 @@ class MySQLHandler extends AbstractProcessingHandler {
             'INSERT INTO `' . $this->table . '` (' . $columns . ') VALUES (' . $fields . ')'
         );
     }
+
 
     /**
      * Writes the record down to the log of the implementing handler
