@@ -156,11 +156,13 @@ class MySQLHandler extends AbstractProcessingHandler {
         foreach($contentArray as $key => $context) {
             if (! in_array($key, $this->fields)) {
                 unset($contentArray[$key]);
+                unset($this->fields[array_search($key, $this->fields)]);
+                continue;
             }
 
             if ($context === null) {
                 unset($contentArray[$key]);
-                unset($this->fields[$key]);
+                unset($this->fields[array_search($key, $this->fields)]);
             }
         }
 
