@@ -39,7 +39,7 @@ class MySQLHandler extends AbstractProcessingHandler {
     /**
      * @var array default fields that are stored in db
      */
-    private $fields = array('channel', 'level', 'message', 'time');
+    private $defaultfields = array('channel', 'level', 'message', 'time');
 
     /**
      * @var string[] additional fields to be stored in the database
@@ -49,6 +49,11 @@ class MySQLHandler extends AbstractProcessingHandler {
      * as the values are stored in the column name $field.
      */
     private $additionalFields = array();
+
+    /**
+     * @var array
+     */
+    private $fields           = array();
 
 
     /**
@@ -87,7 +92,7 @@ class MySQLHandler extends AbstractProcessingHandler {
         }
 
         //Calculate changed entries
-        $removedColumns = array_diff($actualFields, $this->additionalFields, $this->fields);
+        $removedColumns = array_diff($actualFields, $this->additionalFields, $this->defaultfields);
         $addedColumns = array_diff($this->additionalFields, $actualFields);
 
         //Remove columns
@@ -101,7 +106,7 @@ class MySQLHandler extends AbstractProcessingHandler {
         }
 
         // merge default and additional field to one array
-        $this->fields = array_merge($this->fields, $this->additionalFields);
+        $this->defaultfields = array_merge($this->defaultfields, $this->additionalFields);
 
         $this->initialized = true;
     }
@@ -141,6 +146,11 @@ class MySQLHandler extends AbstractProcessingHandler {
         if (!$this->initialized) {
             $this->initialize();
         }
+
+        /**
+         * reset $fields with default values
+         */
+        $this->field = $this->defaultfields;
 
         /*
          * merge $record['context'] and $record['extra'] as additional info of Processors
