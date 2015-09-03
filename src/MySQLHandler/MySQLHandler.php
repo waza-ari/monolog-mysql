@@ -58,6 +58,8 @@ class MySQLHandler extends AbstractProcessingHandler {
     	if(!is_null($pdo)) {
         	$this->pdo = $pdo;
         }
+        //Enables returning more descriptive errors
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
         $this->table = $table;
         $this->additionalFields = $additionalFields;
         parent::__construct($level, $bubble);
@@ -74,10 +76,19 @@ class MySQLHandler extends AbstractProcessingHandler {
 
         //Read out actual columns
         $actualFields = array();
-        $rs = $this->pdo->query('SELECT * FROM `'.$this->table.'` LIMIT 0');
-        for ($i = 0; $i < $rs->columnCount(); $i++) {
-            $col = $rs->getColumnMeta($i);
-            $actualFields[] = $col['name'];
+        //If the connection is SQLite we need to use SQLite specific statements in roder to get this information
+        if($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) == 'sqlite'){
+            $tableQuery = $this->pdo->query('PRAGMA table_info('.$this->table.');');
+            $columns = $tableQuery->fetchAll(PDO::FETCH_ASSOC);
+            foreach($columns as $c){
+                $actualFields[] = $c['name'];
+            }
+        } else {
+            $rs = $this->pdo->query('SELECT * FROM `'.$this->table.'` LIMIT 0');
+            for ($i = 0; $i < $rs->columnCount(); $i++) {
+                $col = $rs->getColumnMeta($i);
+                $actualFields[] = $col['name'];
+            }
         }
 
         //Calculate changed entries
