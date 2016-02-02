@@ -146,6 +146,12 @@ class MySQLHandler extends AbstractProcessingHandler
             'time' => $record['datetime']->format('U')
         ), $record['context']);
 
+        //Fill content array with "null" values if not provided
+        $contentArray = $contentArray + array_combine(
+            $this->additionalFields,
+            array_fill(0, count($this->additionalFields), null)
+        );
+
         $this->statement->execute($contentArray);
     }
 }
