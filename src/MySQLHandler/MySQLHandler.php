@@ -35,7 +35,25 @@ class MySQLHandler extends AbstractProcessingHandler
     /**
      * @var string the table to store the logs in
      */
-    private $table = 'logs';
+    private $table_name = 'logs';
+
+    /**
+     * @var string The default time field type.
+     */
+    private $table_time_type = 'TEXT';
+
+    /**
+     * @var array Allowed time types
+     */
+
+    private $allowed_time_types = array('TEXT', 'DATETIME');
+
+    /**
+     * @var array of field types mapping to time-format and db field-type.
+     */
+
+    private $time_type_data = array('TEXT'       => array('time_format' => 'U', 'field_type' =>'INTEGER UNSIGNED'),
+                                    'DATETIME'   => array('time_format' => 'Y-m-d H:i:s', 'field_type' =>'DATETIME NULL DEFAULT NULL'));
 
     /**
      * @var string[] additional fields to be stored in the database
@@ -50,39 +68,58 @@ class MySQLHandler extends AbstractProcessingHandler
      * Constructor of this class, sets the PDO and calls parent constructor
      *
      * @param PDO $pdo                  PDO Connector for the database
-     * @param bool $table               Table in the database to store the logs in
+     * @param array $table_data         An array containing key => value data expects an array with any
+     *                                  of the following key => values.
+     *
+     *                                  array('table_name'  => 'Your_table_name',   /* If not specified will use $this->table_name
+     *                                          'time_type' => 'TEXT|DATETIME');    /* If not specified will use TEXT
+     *
      * @param array $additionalFields   Additional Context Parameters to store in database
      * @param bool|int $level           Debug level which this handler should store
      * @param bool $bubble
      */
     public function __construct(
+
         PDO $pdo = null,
-        $table,
+        $table_data,
         $additionalFields = array(),
         $level = Logger::DEBUG,
         $bubble = true
     ) {
-        if (!is_null($pdo)) {
-            $this->pdo = $pdo;
+    	if(!is_null($pdo)) {
+        	$this->pdo = $pdo;
         }
-        $this->table = $table;
+        $this->table_name = !empty( $table_data['table_name'] ) ? $table_data['table_name'] : $this->table_name;
+        $table_time_type = !empty( $table_data['time_type'] ) ? $table_data['time_type'] : $this->table_time_type;
+
+        if ( !in_array( $table_time_type, $this->allowed_time_types ) ){
+            $table_time_type = 'TEXT';
+        }
+        $this->table_time_format =  $this->time_type_data[ $table_time_type ]['time_format'];
+        $this->table_time_field = $this->time_type_data[ $table_time_type ]['field_type'];
         $this->additionalFields = $additionalFields;
         parent::__construct($level, $bubble);
     }
 
     /**
-     * Initializes this handler by creating the table if it not exists
+     * Initializes this handler by creating the table if it not exists,
+     * changes to formatting of the query due to extra variables being used
+     * and to help readability.
      */
     private function initialize()
     {
-        $this->pdo->exec(
-            'CREATE TABLE IF NOT EXISTS `'.$this->table.'` '
-            .'(channel VARCHAR(255), level INTEGER, message LONGTEXT, time INTEGER UNSIGNED)'
-        );
+
+        $query = "CREATE TABLE IF NOT EXISTS `{$this->table_name}` "
+                    . '(channel VARCHAR(255), '
+                    . 'level INTEGER, '
+                    . 'message LONGTEXT, '
+                    . "time {$this->table_time_field})";
+
+        $this->pdo->exec( $query );
 
         //Read out actual columns
         $actualFields = array();
-        $rs = $this->pdo->query('SELECT * FROM `'.$this->table.'` LIMIT 0');
+        $rs = $this->pdo->query('SELECT * FROM `'.$this->table_name.'` LIMIT 0');
         for ($i = 0; $i < $rs->columnCount(); $i++) {
             $col = $rs->getColumnMeta($i);
             $actualFields[] = $col['name'];
@@ -99,14 +136,14 @@ class MySQLHandler extends AbstractProcessingHandler
         //Remove columns
         if (!empty($removedColumns)) {
             foreach ($removedColumns as $c) {
-                $this->pdo->exec('ALTER TABLE `'.$this->table.'` DROP `'.$c.'`;');
+                $this->pdo->exec('ALTER TABLE `' . $this->table_name . '` DROP `' . $c . '`;');
             }
         }
 
         //Add columns
         if (!empty($addedColumns)) {
             foreach ($addedColumns as $c) {
-                $this->pdo->exec('ALTER TABLE `'.$this->table.'` add `'.$c.'` TEXT NULL DEFAULT NULL;');
+                $this->pdo->exec('ALTER TABLE `'.$this->table_name.'` add `'.$c.'` TEXT NULL DEFAULT NULL;');
             }
         }
 
@@ -119,7 +156,7 @@ class MySQLHandler extends AbstractProcessingHandler
         }
 
         $this->statement = $this->pdo->prepare(
-            'INSERT INTO `'.$this->table.'` (channel, level, message, time'.$columns.')
+            'INSERT INTO `'.$this->table_name.'` (channel, level, message, time'.$columns.') 
             VALUES (:channel, :level, :message, :time'.$fields.')'
         );
 
@@ -143,13 +180,13 @@ class MySQLHandler extends AbstractProcessingHandler
             'channel' => $record['channel'],
             'level' => $record['level'],
             'message' => $record['message'],
-            'time' => $record['datetime']->format('U')
+            'time' => $record['datetime']->format( $this->table_time_format )
         ), $record['context']);
 
         //Fill content array with "null" values if not provided
         $contentArray = $contentArray + array_combine(
-            $this->additionalFields,
-            array_fill(0, count($this->additionalFields), null)
+                $this->additionalFields,
+                array_fill(0, count($this->additionalFields), null)
         );
 
         $this->statement->execute($contentArray);
