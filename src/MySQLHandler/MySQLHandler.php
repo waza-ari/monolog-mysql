@@ -78,8 +78,14 @@ class MySQLHandler extends AbstractProcessingHandler
      * @param bool|int $level           Debug level which this handler should store
      * @param bool $bubble
      */
-    public function __construct(PDO $pdo = null, $table_data, $additionalFields = array(), $level = Logger::DEBUG, $bubble = true)
-    {
+    public function __construct(
+
+        PDO $pdo = null,
+        $table_data,
+        $additionalFields = array(),
+        $level = Logger::DEBUG,
+        $bubble = true
+    ) {
     	if(!is_null($pdo)) {
         	$this->pdo = $pdo;
         }
@@ -120,17 +126,25 @@ class MySQLHandler extends AbstractProcessingHandler
         }
 
         //Calculate changed entries
-        $removedColumns = array_diff($actualFields, $this->additionalFields, array('channel', 'level', 'message', 'time'));
+        $removedColumns = array_diff(
+            $actualFields,
+            $this->additionalFields,
+            array('channel', 'level', 'message', 'time')
+        );
         $addedColumns = array_diff($this->additionalFields, $actualFields);
 
         //Remove columns
-        if (!empty($removedColumns)) foreach ($removedColumns as $c) {
-            $this->pdo->exec('ALTER TABLE `'.$this->table_name.'` DROP `'.$c.'`;');
+        if (!empty($removedColumns)) {
+            foreach ($removedColumns as $c) {
+                $this->pdo->exec('ALTER TABLE `' . $this->table_name . '` DROP `' . $c . '`;');
+            }
         }
 
         //Add columns
-        if (!empty($addedColumns)) foreach ($addedColumns as $c) {
-            $this->pdo->exec('ALTER TABLE `'.$this->table_name.'` add `'.$c.'` TEXT NULL DEFAULT NULL;');
+        if (!empty($addedColumns)) {
+            foreach ($addedColumns as $c) {
+                $this->pdo->exec('ALTER TABLE `'.$this->table_name.'` add `'.$c.'` TEXT NULL DEFAULT NULL;');
+            }
         }
 
         //Prepare statement
@@ -142,7 +156,8 @@ class MySQLHandler extends AbstractProcessingHandler
         }
 
         $this->statement = $this->pdo->prepare(
-            'INSERT INTO `'.$this->table_name.'` (channel, level, message, time'.$columns.') VALUES (:channel, :level, :message, :time'.$fields.')'
+            'INSERT INTO `'.$this->table_name.'` (channel, level, message, time'.$columns.') 
+            VALUES (:channel, :level, :message, :time'.$fields.')'
         );
 
         $this->initialized = true;
@@ -167,6 +182,12 @@ class MySQLHandler extends AbstractProcessingHandler
             'message' => $record['message'],
             'time' => $record['datetime']->format( $this->table_time_format )
         ), $record['context']);
+
+        //Fill content array with "null" values if not provided
+        $contentArray = $contentArray + array_combine(
+                $this->additionalFields,
+                array_fill(0, count($this->additionalFields), null)
+        );
 
         $this->statement->execute($contentArray);
     }
