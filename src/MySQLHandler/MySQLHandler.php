@@ -14,7 +14,8 @@ use PDOStatement;
  * Class MySQLHandler
  * @package wazaari\MysqlHandler
  */
-class MySQLHandler extends AbstractProcessingHandler {
+class MySQLHandler extends AbstractProcessingHandler
+{
 
     /**
      * @var bool defines whether the MySQL connection is been initialized
@@ -44,10 +45,15 @@ class MySQLHandler extends AbstractProcessingHandler {
     /**
      * @var array Allowed time types
      */
+
     private $allowed_time_types = array('TEXT', 'DATETIME');
 
+    /**
+     * @var array of field types mapping to time-format and db field-type.
+     */
+
     private $time_type_data = array('TEXT'       => array('time_format' => 'U', 'field_type' =>'INTEGER UNSIGNED'),
-                                    'DATETIME'  => array('time_format' => 'Y-m-d H:i:s', 'field_type' =>'DATETIME NULL DEFAULT NULL'));
+                                    'DATETIME'   => array('time_format' => 'Y-m-d H:i:s', 'field_type' =>'DATETIME NULL DEFAULT NULL'));
 
     /**
      * @var string[] additional fields to be stored in the database
@@ -72,7 +78,8 @@ class MySQLHandler extends AbstractProcessingHandler {
      * @param bool|int $level           Debug level which this handler should store
      * @param bool $bubble
      */
-    public function __construct(PDO $pdo = null, $table_data, $additionalFields = array(), $level = Logger::DEBUG, $bubble = true) {
+    public function __construct(PDO $pdo = null, $table_data, $additionalFields = array(), $level = Logger::DEBUG, $bubble = true)
+    {
     	if(!is_null($pdo)) {
         	$this->pdo = $pdo;
         }
@@ -89,9 +96,12 @@ class MySQLHandler extends AbstractProcessingHandler {
     }
 
     /**
-     * Initializes this handler by creating the table if it not exists
+     * Initializes this handler by creating the table if it not exists,
+     * changes to formatting of the query due to extra variables being used
+     * and to help readability.
      */
-    private function initialize() {
+    private function initialize()
+    {
 
         $query = "CREATE TABLE IF NOT EXISTS `{$this->table_name}` "
                     . '(channel VARCHAR(255), '
@@ -144,7 +154,8 @@ class MySQLHandler extends AbstractProcessingHandler {
      * @param  $record[]
      * @return void
      */
-    protected function write(array $record) {
+    protected function write(array $record)
+    {
         if (!$this->initialized) {
             $this->initialize();
         }
