@@ -14,8 +14,7 @@ use PDOStatement;
  * Class MySQLHandler
  * @package wazaari\MysqlHandler
  */
-class MySQLHandler extends AbstractProcessingHandler
-{
+class MySQLHandler extends AbstractProcessingHandler {
 
     /**
      * @var bool defines whether the MySQL connection is been initialized
@@ -47,6 +46,13 @@ class MySQLHandler extends AbstractProcessingHandler
     private $additionalFields = array();
 
     /**
+     * @var array default columns for logger
+     *
+     * A minimal set of columns in table
+     */
+    private $defaultColumns = ['channel', 'level', 'message', 'time'];
+
+    /**
      * Constructor of this class, sets the PDO and calls parent constructor
      *
      * @param PDO $pdo                  PDO Connector for the database
@@ -55,15 +61,9 @@ class MySQLHandler extends AbstractProcessingHandler
      * @param bool|int $level           Debug level which this handler should store
      * @param bool $bubble
      */
-    public function __construct(
-        PDO $pdo = null,
-        $table,
-        $additionalFields = array(),
-        $level = Logger::DEBUG,
-        $bubble = true
-    ) {
-        if (!is_null($pdo)) {
-            $this->pdo = $pdo;
+    public function __construct(PDO $pdo = null, $table, $additionalFields = array(), $level = Logger::DEBUG, $bubble = true) {
+    	if(!is_null($pdo)) {
+        	$this->pdo = $pdo;
         }
         $this->table = $table;
         $this->additionalFields = $additionalFields;
@@ -73,8 +73,7 @@ class MySQLHandler extends AbstractProcessingHandler
     /**
      * Initializes this handler by creating the table if it not exists
      */
-    private function initialize()
-    {
+    private function initialize() {
         $this->pdo->exec(
             'CREATE TABLE IF NOT EXISTS `'.$this->table.'` '
             .'(channel VARCHAR(255), level INTEGER, message LONGTEXT, time INTEGER UNSIGNED)'
@@ -89,25 +88,17 @@ class MySQLHandler extends AbstractProcessingHandler
         }
 
         //Calculate changed entries
-        $removedColumns = array_diff(
-            $actualFields,
-            $this->additionalFields,
-            array('channel', 'level', 'message', 'time')
-        );
-        $addedColumns = array_diff($this->additionalFields, $actualFields);
+        $columnsToRemove = array_diff($actualFields, $this->additionalFields, $this->defaultColumns);
+        $columnsToAdd = array_diff(array_merge($this->additionalFields, $this->defaultColumns), $actualFields);
 
         //Remove columns
-        if (!empty($removedColumns)) {
-            foreach ($removedColumns as $c) {
-                $this->pdo->exec('ALTER TABLE `'.$this->table.'` DROP `'.$c.'`;');
-            }
+        if (!empty($columnsToRemove)) foreach ($columnsToRemove as $c) {
+            $this->pdo->exec('ALTER TABLE `'.$this->table.'` DROP `'.$c.'`;');
         }
 
         //Add columns
-        if (!empty($addedColumns)) {
-            foreach ($addedColumns as $c) {
-                $this->pdo->exec('ALTER TABLE `'.$this->table.'` add `'.$c.'` TEXT NULL DEFAULT NULL;');
-            }
+        if (!empty($columnsToAdd)) foreach ($columnsToAdd as $c) {
+            $this->pdo->exec('ALTER TABLE `'.$this->table.'` add `'.$c.'` TEXT NULL DEFAULT NULL;');
         }
 
         //Prepare statement
@@ -119,8 +110,7 @@ class MySQLHandler extends AbstractProcessingHandler
         }
 
         $this->statement = $this->pdo->prepare(
-            'INSERT INTO `'.$this->table.'` (channel, level, message, time'.$columns.')
-            VALUES (:channel, :level, :message, :time'.$fields.')'
+            'INSERT INTO `'.$this->table.'` (channel, level, message, time'.$columns.') VALUES (:channel, :level, :message, :time'.$fields.')'
         );
 
         $this->initialized = true;
@@ -132,8 +122,7 @@ class MySQLHandler extends AbstractProcessingHandler
      * @param  $record[]
      * @return void
      */
-    protected function write(array $record)
-    {
+    protected function write(array $record) {
         if (!$this->initialized) {
             $this->initialize();
         }
@@ -145,12 +134,6 @@ class MySQLHandler extends AbstractProcessingHandler
             'message' => $record['message'],
             'time' => $record['datetime']->format('U')
         ), $record['context']);
-
-        //Fill content array with "null" values if not provided
-        $contentArray = $contentArray + array_combine(
-            $this->additionalFields,
-            array_fill(0, count($this->additionalFields), null)
-        );
 
         $this->statement->execute($contentArray);
     }
