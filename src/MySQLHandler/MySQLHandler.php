@@ -52,8 +52,10 @@ class MySQLHandler extends AbstractProcessingHandler
      * @var array of field types mapping to time-format and db field-type.
      */
 
-    private $time_type_data = array('TEXT'       => array('time_format' => 'U', 'field_type' =>'INTEGER UNSIGNED'),
-                                    'DATETIME'   => array('time_format' => 'Y-m-d H:i:s', 'field_type' =>'DATETIME NULL DEFAULT NULL'));
+    private $time_type_data = array('TEXT'       => array('time_format' => 'U',
+                                                          'field_type'  =>'INTEGER UNSIGNED'),
+                                    'DATETIME'   => array('time_format' => 'Y-m-d H:i:s',
+                                                           'field_type' =>'DATETIME NULL DEFAULT NULL'));
 
     /**
      * @var string[] additional fields to be stored in the database
@@ -78,25 +80,29 @@ class MySQLHandler extends AbstractProcessingHandler
      * @param bool|int $level           Debug level which this handler should store
      * @param bool $bubble
      */
-    public function __construct(
+    public function __construct( PDO $pdo = null, $table_data, $additionalFields = array(), $level = Logger::DEBUG, $bubble = true) {
 
-        PDO $pdo = null,
-        $table_data,
-        $additionalFields = array(),
-        $level = Logger::DEBUG,
-        $bubble = true
-    ) {
     	if(!is_null($pdo)) {
         	$this->pdo = $pdo;
         }
-        $this->table_name = !empty( $table_data['table_name'] ) ? $table_data['table_name'] : $this->table_name;
-        $table_time_type = !empty( $table_data['time_type'] ) ? $table_data['time_type'] : $this->table_time_type;
+
+        /* Check if we have time and table setting data through table-data.*/
+        if(is_array($table_data)){
+            $this->table_name = !empty( $table_data['table_name'] ) ? $table_data['table_name'] : $this->table_name;
+            $table_time_type = !empty( $table_data['time_type'] ) ? $table_data['time_type'] : $this->table_time_type;
+        } else {
+            /* No, we're supporting the original string data-type. */
+            /* Set default table time type. */
+            $table_time_type = $this->table_time_type;
+            $this->table_name = $table_data;
+        }
 
         if ( !in_array( $table_time_type, $this->allowed_time_types ) ){
             $table_time_type = 'TEXT';
         }
         $this->table_time_format =  $this->time_type_data[ $table_time_type ]['time_format'];
-        $this->table_time_field = $this->time_type_data[ $table_time_type ]['field_type'];
+        $this->table_time_field  =  $this->time_type_data[ $table_time_type ]['field_type'];
+
         $this->additionalFields = $additionalFields;
         parent::__construct($level, $bubble);
     }
