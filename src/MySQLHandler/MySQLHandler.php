@@ -70,8 +70,8 @@ class MySQLHandler extends AbstractProcessingHandler
      * Constructor of this class, sets the PDO and calls parent constructor
      *
      * @param PDO $pdo                  PDO Connector for the database
-     * @param array $table_data         An array containing key => value data expects an array with any
-     *                                  of the following key => values.
+     * @param mixed(string/array)  $table_data : A string for table name or an array containing key => value data
+     *                              expects a string or an array with the following key => values.
      *
      *                                  array('table_name'  => 'Your_table_name',   /* If not specified will use $this->table_name
      *                                          'time_type' => 'TEXT|DATETIME');    /* If not specified will use TEXT
