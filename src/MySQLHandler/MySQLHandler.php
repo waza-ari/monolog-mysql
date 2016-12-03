@@ -167,7 +167,7 @@ class MySQLHandler extends AbstractProcessingHandler
         /**
          * reset $fields with default values
          */
-        $this->field = $this->defaultfields;
+        $this->fields = $this->defaultfields;
 
         /*
          * merge $record['context'] and $record['extra'] as additional info of Processors
