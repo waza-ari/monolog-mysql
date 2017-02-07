@@ -136,7 +136,10 @@ class MySQLHandler extends AbstractProcessingHandler
         $columns = "";
         $fields  = "";
         foreach ($this->fields as $key => $f) {
-            if ($key == 0) {
+            if ($f == 'id') {
+                continue;
+            }
+            if ($key == 1) {
                 $columns .= "$f";
                 $fields .= ":$f";
                 continue;
