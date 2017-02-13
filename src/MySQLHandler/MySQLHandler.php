@@ -40,7 +40,7 @@ class MySQLHandler extends AbstractProcessingHandler
     /**
      * @var array default fields that are stored in db
      */
-    private $defaultfields = array('channel', 'level', 'message', 'time');
+    private $defaultfields = array('id', 'channel', 'level', 'message', 'time');
 
     /**
      * @var string[] additional fields to be stored in the database
@@ -136,7 +136,10 @@ class MySQLHandler extends AbstractProcessingHandler
         $columns = "";
         $fields  = "";
         foreach ($this->fields as $key => $f) {
-            if ($key == 0) {
+            if ($f == 'id') {
+                continue;
+            }
+            if ($key == 1) {
                 $columns .= "$f";
                 $fields .= ":$f";
                 continue;
