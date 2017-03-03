@@ -56,6 +56,10 @@ class MySQLHandler extends AbstractProcessingHandler
      */
     private $fields           = array();
 
+    /**
+     * @var string format the time should be stored in, defaults to seconds since epoch
+     */
+    private $dateFormat;
 
     /**
      * Constructor of this class, sets the PDO and calls parent constructor
@@ -65,19 +69,22 @@ class MySQLHandler extends AbstractProcessingHandler
      * @param array $additionalFields   Additional Context Parameters to store in database
      * @param bool|int $level           Debug level which this handler should store
      * @param bool $bubble
+     * @param string $dateFormat        Format the time should be stored in
      */
     public function __construct(
         PDO $pdo = null,
         $table,
         $additionalFields = array(),
         $level = Logger::DEBUG,
-        $bubble = true
+        $bubble = true,
+        $dateFormat = 'U'
     ) {
        if (!is_null($pdo)) {
             $this->pdo = $pdo;
         }
         $this->table = $table;
         $this->additionalFields = $additionalFields;
+        $this->dateFormat = $dateFormat;
         parent::__construct($level, $bubble);
     }
 
@@ -88,7 +95,7 @@ class MySQLHandler extends AbstractProcessingHandler
     {
         $this->pdo->exec(
             'CREATE TABLE IF NOT EXISTS `'.$this->table.'` '
-            .'(id BIGINT(20) NOT NULL AUTO_INCREMENT PRIMARY KEY, channel VARCHAR(255), level INTEGER, message LONGTEXT, time INTEGER UNSIGNED, INDEX(channel) USING HASH, INDEX(level) USING HASH, INDEX(time) USING BTREE)'
+            .'(id BIGINT(20) NOT NULL AUTO_INCREMENT PRIMARY KEY, channel VARCHAR(255), level INTEGER, message LONGTEXT, time ' . $this->getTimeColumnType() . ', INDEX(channel) USING HASH, INDEX(level) USING HASH, INDEX(time) USING BTREE)'
         );
 
         //Read out actual columns
@@ -186,7 +193,7 @@ class MySQLHandler extends AbstractProcessingHandler
                                         'channel' => $record['channel'],
                                         'level' => $record['level'],
                                         'message' => $record['message'],
-                                        'time' => $record['datetime']->format('U')
+                                        'time' => $record['datetime']->format($this->dateFormat)
                                     ), $record['context']);
 
         // unset array keys that are passed put not defined to be stored, to prevent sql errors
@@ -212,5 +219,30 @@ class MySQLHandler extends AbstractProcessingHandler
         );
 
         $this->statement->execute($contentArray);
+    }
+
+    /**
+     * Returns the appropriate MySQL data type to use based on the dateFormat supplied
+     * @return string
+     */
+    private function getTimeColumnType()
+    {
+        $format = $this->dateFormat;
+
+        if ($format == "U") {
+            return "INTEGER";
+        } else if ($format == "Y-m-d") {
+            return "DATE";
+        } else if ($format == "Y-m-d H:i:s") {
+            return "DATETIME";
+        } else if ($format == "YmdHis") {
+            return "TIMESTAMP";
+        } else if ($format == "H:i:s") {
+            return "TIME";
+        } else if ($format == "Y") {
+            return "YEAR";
+        }
+
+        return "VARCHAR(255)";
     }
 }
