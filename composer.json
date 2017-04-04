@@ -11,7 +11,8 @@
         }
     ],
     "require": {
-        "monolog/monolog": ">1.4.0"
+        "monolog/monolog": ">1.4.0",
+        "ext-pdo_mysql": "*"
     },
     "autoload": {
         "psr-4": {"MySQLHandler\\": "src/MySQLHandler"}
