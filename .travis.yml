@@ -8,7 +8,7 @@ php:
   - hhvm
   - nightly
 before_install:
-  - mysql -e 'CREATE DATABASE monolog-mysql-test;'
+  - mysql -e 'CREATE DATABASE monolog_mysql_test;'
   - composer install
 services:
   - mysql
