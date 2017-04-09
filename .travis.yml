@@ -12,3 +12,4 @@ before_install:
   - composer install
 services:
   - mysql
+script: phpunit --configuration phpunit_mysql.xml --coverage-text
