@@ -21,10 +21,11 @@ Just use it as any other Monolog Handler, push it to the stack of your Monolog L
 - **$table** The table name where the logs should be stored
 - **$additionalFields** simple array of additional database fields, which should be stored in the database. The columns are created automatically, and the fields can later be used in the extra context section of a record. See examples below. _Defaults to an empty array()_
 - **$level** can be any of the standard Monolog logging levels. Use Monologs statically defined contexts. _Defaults to Logger::DEBUG_
-- **$bubble** _Defaults to true_
+- **$bubble** _Defaults to true_, defines whether they block the record or not if they handled it. Setting `bubble` to false means that the handler will not pass the log on to following handlers.
 
 # Examples
-Given that $pdo is your database instance, you could use the class as follows:
+Given that `$pdo is your database instance, you could use the class as follows. For details about the context/name
+of a logger please refer to the [monolog documentation](https://github.com/Seldaek/monolog/blob/master/doc/01-usage.md).
 
 ```php
 //Import class

@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<mysqldump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <database name="monolog_mysql_test">
+        <table_data name="logging">
+            <row>
+                <field name="id">1</field>
+                <field name="channel">test_context</field>
+                <field name="level">200</field>
+                <field name="message">Test log message</field>
+                <field name="username" xsi:nil="true" />
+                <field name="userid" xsi:nil="true" />
+            </row>
+            <row>
+                <field name="id">2</field>
+                <field name="channel">test_context</field>
+                <field name="level">550</field>
+                <field name="message">User tried to access area 51 without permission</field>
+                <field name="username">waza-ari</field>
+                <field name="userid">1337</field>
+            </row>
+        </table_data>
+    </database>
+</mysqldump>

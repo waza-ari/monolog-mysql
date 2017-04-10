@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<mysqldump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <database name="monolog_mysql_test">
+        <table_data name="logging">
+            <row>
+                <field name="id">1</field>
+                <field name="channel">test_context</field>
+                <field name="level">200</field>
+                <field name="message">Test log message</field>
+                <field name="username" xsi:nil="true" />
+            </row>
+            <row>
+                <field name="id">2</field>
+                <field name="channel">test_context</field>
+                <field name="level">550</field>
+                <field name="message">User tried to access area 51 without permission</field>
+                <field name="username">waza-ari</field>
+            </row>
+            <row>
+                <field name="id">3</field>
+                <field name="channel">test_context</field>
+                <field name="level">550</field>
+                <field name="message">User tried to access area 51,5 without permission</field>
+                <field name="username">waza-ari</field>
+            </row>
+            <row>
+                <field name="id">4</field>
+                <field name="channel">test_context</field>
+                <field name="level">550</field>
+                <field name="message">User tried to access area 52 without permission</field>
+                <field name="username">waza-ari</field>
+            </row>
+            <row>
+                <field name="id">5</field>
+                <field name="channel">test_context</field>
+                <field name="level">600</field>
+                <field name="message">Schroedinger has opened the box!</field>
+                <field name="username">Schroedinger</field>
+            </row>
+        </table_data>
+    </database>
+</mysqldump>
