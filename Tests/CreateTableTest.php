@@ -164,14 +164,14 @@ class CreateTableTest extends TestCase
         $this->setupLogger(array('username'));
 
         //Should have three entries not and should still be same table as in previous test
-        $this->assertEquals(3, $this->getConnection()->getRowCount($this->tableName), "There should be two rows now");
+        $this->assertEquals(3, $this->getConnection()->getRowCount($this->tableName), "There should be three rows now");
         $this->assertTableAgainstXMLDump('Tests/testAddEntryWithIncompleteAdditionalFields.xml');
 
         //Create new entry
         $this->logger->addAlert("User tried to access area 52 without permission", array('username' => 'waza-ari'));
 
         //Now, there should be four entries
-        $this->assertEquals(4, $this->getConnection()->getRowCount($this->tableName), "There should be two rows now");
+        $this->assertEquals(4, $this->getConnection()->getRowCount($this->tableName), "There should be four rows now");
         $this->assertTableAgainstXMLDump('Tests/testDeleteAdditionalField.xml');
     }
 
@@ -185,7 +185,7 @@ class CreateTableTest extends TestCase
         $this->logger->addEmergency("Schroedinger has opened the box!", array('username' => 'Schroedinger', 'item' => 'Cat'));
 
         //Now, there should be five entries
-        $this->assertEquals(5, $this->getConnection()->getRowCount($this->tableName), "There should be two rows now");
+        $this->assertEquals(5, $this->getConnection()->getRowCount($this->tableName), "There should be five rows");
         $this->assertTableAgainstXMLDump('Tests/testLogUnknownAdditionalField.xml');
     }
 
@@ -229,10 +229,26 @@ class CreateTableTest extends TestCase
         $this->assertEquals(11, $col['len']);
     }
 
-    /**public function testChangeTimeFormat()
+    /**
+     * Test changing the time format after the fact
+     */
+    public function testChangeTimeFormat()
     {
         $this->setupLogger(array('username'), \Monolog\Logger::DEBUG, 'Y-m-d');
 
-        //TODO: verify current number, add logging entry, verify new format
-    }**/
+        // Verify current number
+        //There should be 6 entries now
+        $this->assertEquals(6, $this->getConnection()->getRowCount($this->tableName), "There should be six rows");
+        $this->assertTableAgainstXMLDump('Tests/testSeverityHandling.xml');
+
+        // Add logging entry
+        $this->logger->debug('User just took a cookie from the cookie jar!', array('username' => 'Steve'));
+
+        // TODO: Verify new format
+
+        // Verify current number
+        //There should be 7 entries now
+        $this->assertEquals(7, $this->getConnection()->getRowCount($this->tableName), "There should be seven rows");
+        $this->assertTableAgainstXMLDump('Tests/testChangeTimeFormat.xml');
+    }
 }

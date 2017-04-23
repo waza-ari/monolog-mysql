@@ -6,6 +6,7 @@ use Monolog\Logger;
 use Monolog\Handler\AbstractProcessingHandler;
 use PDO;
 use PDOStatement;
+use DateTime;
 
 /**
  * This class is a handler for Monolog, which can be used
@@ -128,6 +129,15 @@ class MySQLHandler extends AbstractProcessingHandler
             }
         }
 
+        // If the dateFormat supplied doesn't match the existing format then change the
+        // time format to whatever was passed
+        $existingTimeFormat = $this->getExistingTimeFormat();
+        if ($existingTimeFormat !== false) {
+            if ($this->dateFormat != $existingTimeFormat) {
+                $this->updateTimeFormat($existingTimeFormat, $this->dateFormat);
+            }
+        }
+
         // merge default and additional field to one array
         $this->defaultFields = array_merge($this->defaultFields, $this->additionalFields);
 
@@ -218,6 +228,7 @@ class MySQLHandler extends AbstractProcessingHandler
 
     /**
      * Returns the appropriate MySQL data type to use based on the dateFormat supplied
+     *
      * @return string
      */
     private function getTimeColumnType()
@@ -239,5 +250,69 @@ class MySQLHandler extends AbstractProcessingHandler
         }
 
         return "VARCHAR(255)";
+    }
+
+    /**
+     * Get the MySQL data type for the time column
+     *
+     * @return string|boolean
+     */
+    private function getExistingTimeFormat()
+    {
+        $existingTimeFormat = '';
+
+        // Get the existing data type
+        $stmt = $this->pdo->query("SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '" . $this->table . "' AND COLUMN_NAME = 'time'");
+        $rs = $stmt->fetch();
+        $existingColumnType = $rs['DATA_TYPE'];
+
+        // We can determine the format from the data type
+        if ($existingColumnType == 'int') {
+            $existingTimeFormat = 'U';
+        } else if ($existingColumnType == 'date') {
+            $existingTimeFormat = 'Y-m-d';
+        } else if ($existingColumnType == 'datetime') {
+            $existingTimeFormat = 'Y-m-d H:i:s';
+        } else if ($existingColumnType== 'timestamp') {
+            $existingTimeFormat = 'YmdHis';
+        } else if ($existingColumnType == 'time') {
+            $existingTimeFormat = 'H:i:s';
+        } else if ($existingColumnType == 'year') {
+            $existingTimeFormat = 'Y';
+        } else {
+            // Not sure what to do about custom formats...
+            return false;
+        }
+
+        return $existingTimeFormat;
+    }
+
+    /**
+     * Updates the table to use a predefined format
+     *
+     * @param  string $oldFormat The existing format
+     * @param  string $newFormat The format to update to
+     * @return null
+     */
+    private function updateTimeFormat($oldFormat, $newFormat)
+    {
+        // Get the existing times
+        $stmt = $this->pdo->query("SELECT id, time FROM {$this->table}");
+        $existingRows = $stmt->fetchAll();
+
+        // Convert the times to the new format
+        for ($i = 0; $i < count($existingRows); $i++) {
+            $originalTime = DateTime::createFromFormat($oldFormat, $existingRows[$i]['time']);
+            $existingRows[$i]['time'] = $originalTime->format($newFormat);
+        }
+
+        // Change the column type
+        $this->pdo->exec("UPDATE {$this->table} SET time = NULL");
+        $this->pdo->exec("ALTER TABLE {$this->table} CHANGE time time " . $this->getTimeColumnType());
+
+        // Re-apply the times in the new format
+        for ($i = 0; $i < count($existingRows); $i++) {
+            $this->pdo->exec("UPDATE {$this->table} SET time = '{$existingRows[$i]['time']}' WHERE id = {$existingRows[$i]['id']}");
+        }
     }
 }
