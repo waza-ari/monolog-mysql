@@ -130,16 +130,13 @@ class MySQLHandler extends AbstractProcessingHandler
     /**
      * Prepare the sql statment depending on the fields that should be written to the database
      */
-    private function prepareStatement()
+    private function prepareStatement($fieldsArray)
     {
         //Prepare statement
         $columns = "";
         $fields  = "";
-        foreach ($this->fields as $key => $f) {
-            if ($f == 'id') {
-                continue;
-            }
-            if ($key == 1) {
+        foreach ($fieldsArray as $key => $f) {
+            if ($key == 0) {
                 $columns .= "$f";
                 $fields .= ":$f";
                 continue;
@@ -203,14 +200,7 @@ class MySQLHandler extends AbstractProcessingHandler
             }
         }
 
-        $this->prepareStatement();
-
-        //Fill content array with "null" values if not provided
-        $contentArray = $contentArray + array_combine(
-            $this->additionalFields,
-            array_fill(0, count($this->additionalFields), null)
-        );
-
+        $this->prepareStatement(array_keys($contentArray));
         $this->statement->execute($contentArray);
     }
 }
