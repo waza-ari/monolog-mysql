@@ -188,7 +188,7 @@ class MySQLHandler extends AbstractProcessingHandler
 
         // unset array keys that are passed put not defined to be stored, to prevent sql errors
         foreach($contentArray as $key => $context) {
-            if (! in_array($key, $this->fields)) {
+            if (! in_array($key, $this->fields, true)) {
                 unset($contentArray[$key]);
                 unset($this->fields[array_search($key, $this->fields)]);
                 continue;
