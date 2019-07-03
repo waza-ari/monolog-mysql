@@ -179,12 +179,12 @@ class MySQLHandler extends AbstractProcessingHandler
         }
 
         //'context' contains the array
-        $contentArray = array_merge(array(
+        $contentArray = array_merge($record['context'], array(
                                         'channel' => $record['channel'],
                                         'level' => $record['level'],
                                         'message' => $record['message'],
                                         'time' => $record['datetime']->format('U')
-                                    ), $record['context']);
+                                    ));
 
         // unset array keys that are passed put not defined to be stored, to prevent sql errors
         foreach($contentArray as $key => $context) {
