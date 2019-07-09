@@ -7,6 +7,10 @@ The class further allows to dynamically add extra attributes, which are stored i
 
 Homepage: http://www.d-herrmann.de/projects/monolog-mysql-handler/
 
+# HELP WANTED
+
+As I do not use this project myself anymore and I do not find the time to maintain this project as it deserves I would be happy to find someone taking it over. Please contact me at danielherrmann+gitlab@postep.de if you'd be interesting to take over that project. Thanks!
+
 # Installation
 monolog-mysql is available via composer. Just add the following line to your required section in composer.json and do a `php composer.phar update`.
 
