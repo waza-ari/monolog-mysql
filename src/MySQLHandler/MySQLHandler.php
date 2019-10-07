@@ -205,6 +205,13 @@ class MySQLHandler extends AbstractProcessingHandler
 
         $this->prepareStatement();
 
+	    //Remove unused keys
+	    foreach($this->additionalFields as $key => $context) {
+		    if(! isset($contentArray[$key])) {
+			    unset($this->additionalFields[$key]);
+		    }
+	    }
+
         //Fill content array with "null" values if not provided
         $contentArray = $contentArray + array_combine(
             $this->additionalFields,
