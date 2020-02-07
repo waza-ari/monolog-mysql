@@ -73,7 +73,7 @@ class MySQLHandler extends AbstractProcessingHandler
         $level = Logger::DEBUG,
         $bubble = true
     ) {
-       if (!is_null($pdo)) {
+        if (!is_null($pdo)) {
             $this->pdo = $pdo;
         }
         $this->table = $table;
@@ -82,14 +82,49 @@ class MySQLHandler extends AbstractProcessingHandler
     }
 
     /**
-     * Initializes this handler by creating the table if it not exists
+     * Checks if logs table exists
+     * @return bool
      */
-    private function initialize()
+    private function logsTableExists(): bool
+    {
+        // Try a select statement against the table
+        try {
+            $result = $this->pdo->query('
+                SELECT 1
+                FROM ' . $this->table . '
+                LIMIT 1
+            ');
+        } catch (\PDOException $e) {
+            // We got an exception == table not found
+            return false;
+        }
+
+        // Result is either boolean FALSE (no table found) or PDOStatement Object (table found)
+        return $result !== false;
+    }
+
+    /**
+     * Create log's table
+     * We don't want to call CREATE TABLE IF EXISTS every time in __CLASS__::initialize(), because it automatically issues an implicit COMMIT when in transaction, @see https://www.php.net/manual/en/pdo.begintransaction.php
+     * @todo A way to prevent autoCOMMIT transaction if table doesn't exist - first call of this method (when the table doesn't exist) still breaks transaction
+     */
+    private function createLogsTable(): void
     {
         $this->pdo->exec(
             'CREATE TABLE IF NOT EXISTS `'.$this->table.'` '
             .'(id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, channel VARCHAR(255), level INTEGER, message LONGTEXT, time INTEGER UNSIGNED, INDEX(channel) USING HASH, INDEX(level) USING HASH, INDEX(time) USING BTREE)'
         );
+    }
+
+
+    /**
+     * Initializes this handler by creating the table if it not exists
+     */
+    private function initialize()
+    {
+        if ($this->logsTableExists() === false) {
+            $this->createLogsTable();
+        }
 
         //Read out actual columns
         $actualFields = array();
@@ -205,18 +240,18 @@ class MySQLHandler extends AbstractProcessingHandler
 
         $this->prepareStatement();
 
-	    //Remove unused keys
-	    foreach($this->additionalFields as $key => $context) {
-		    if(! isset($contentArray[$key])) {
-			    unset($this->additionalFields[$key]);
-		    }
-	    }
+        //Remove unused keys
+        foreach($this->additionalFields as $key => $context) {
+            if(! isset($contentArray[$key])) {
+                unset($this->additionalFields[$key]);
+            }
+        }
 
         //Fill content array with "null" values if not provided
         $contentArray = $contentArray + array_combine(
-            $this->additionalFields,
-            array_fill(0, count($this->additionalFields), null)
-        );
+                $this->additionalFields,
+                array_fill(0, count($this->additionalFields), null)
+            );
 
         $this->statement->execute($contentArray);
     }
