@@ -238,6 +238,11 @@ class MySQLHandler extends AbstractProcessingHandler
             }
         }
 
+        // remove default fields which are not provided in $contentArray; we can skip 'id' too, because it is PRIMARY AI key
+        $this->fields = array_filter($this->fields, static function($val) use ($contentArray) {
+            return array_key_exists($val, $contentArray);
+        });
+
         $this->prepareStatement();
 
         //Remove unused keys
