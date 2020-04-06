@@ -242,7 +242,7 @@ class MySQLHandler extends AbstractProcessingHandler
 
         //Remove unused keys
         foreach ($this->additionalFields as $key => $context) {
-            if (isset($contentArray[$context])) {
+            if (isset($contentArray[$key])) {
                 unset($this->additionalFields[$key]);
             }
         }
