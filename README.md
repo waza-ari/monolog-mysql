@@ -26,6 +26,13 @@ Just use it as any other Monolog Handler, push it to the stack of your Monolog L
 - **$bubble** _Defaults to true_
 - **$skipDatabaseModifications** Defines whether we should skip any attempts to sync current database state with what's requested by the code (includes creating the table and adding / dropping fields). _Defaults to false_
 
+If $skipDatabaseModifications is set to true, please use the following query as a template to create the log table (with additional fields, if necessary)
+```mysql
+CREATE TABLE `log` (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, channel VARCHAR(255), level INTEGER, message LONGTEXT, time INTEGER UNSIGNED, INDEX(channel) USING HASH, INDEX(level) USING HASH, INDEX(time) USING BTREE
+)
+```
+
 # Examples
 Given that $pdo is your database instance, you could use the class as follows:
 
