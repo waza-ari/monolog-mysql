@@ -60,18 +60,20 @@ class MySQLHandler extends AbstractProcessingHandler
     /**
      * Constructor of this class, sets the PDO and calls parent constructor
      *
-     * @param PDO $pdo                  PDO Connector for the database
-     * @param bool $table               Table in the database to store the logs in
-     * @param array $additionalFields   Additional Context Parameters to store in database
-     * @param bool|int $level           Debug level which this handler should store
-     * @param bool $bubble
+     * @param PDO      $pdo                       PDO Connector for the database
+     * @param bool     $table                     Table in the database to store the logs in
+     * @param array    $additionalFields          Additional Context Parameters to store in database
+     * @param bool|int $level                     Debug level which this handler should store
+     * @param bool     $bubble
+     * @param bool     $skipDatabaseModifications Defines whether attempts to alter database should be skipped
      */
     public function __construct(
         PDO $pdo = null,
         $table,
         $additionalFields = array(),
         $level = Logger::DEBUG,
-        $bubble = true
+        $bubble = true,
+        $skipDatabaseModifications = false
     ) {
        if (!is_null($pdo)) {
             $this->pdo = $pdo;
@@ -79,6 +81,11 @@ class MySQLHandler extends AbstractProcessingHandler
         $this->table = $table;
         $this->additionalFields = $additionalFields;
         parent::__construct($level, $bubble);
+
+        if ($skipDatabaseModifications) {
+            $this->mergeDefaultAndAdditionalFields();
+            $this->initialized = true;
+        }
     }
 
     /**
@@ -121,8 +128,7 @@ class MySQLHandler extends AbstractProcessingHandler
             }
         }
 
-        // merge default and additional field to one array
-        $this->defaultfields = array_merge($this->defaultfields, $this->additionalFields);
+        $this->mergeDefaultAndAdditionalFields();
 
         $this->initialized = true;
     }
@@ -219,5 +225,13 @@ class MySQLHandler extends AbstractProcessingHandler
         );
 
         $this->statement->execute($contentArray);
+    }
+
+    /**
+     * Merges default and additional fields into one array
+     */
+    private function mergeDefaultAndAdditionalFields()
+    {
+        $this->defaultfields = array_merge($this->defaultfields, $this->additionalFields);
     }
 }
