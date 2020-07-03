@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace MySQLHandler;
 
 use Monolog\Handler\AbstractProcessingHandler;
@@ -16,72 +18,88 @@ use PDOStatement;
  */
 class MySQLHandler extends AbstractProcessingHandler
 {
-
     /**
-     * @var bool defines whether the MySQL connection is been initialized
+     * defines whether the MySQL connection is been initialized
+     *
+     * @var bool
      */
-    private $initialized = false;
+    private $initialized;
 
     /**
-     * @var PDO pdo object of database connection
+     * pdo object of database connection
+     *
+     * @var PDO
      */
     protected $pdo;
 
     /**
-     * @var PDOStatement statement to insert a new record
+     * statement to insert a new record
+     *
+     * @var PDOStatement
      */
     private $statement;
 
     /**
-     * @var string the table to store the logs in
+     * the table to store the logs in
+     *
+     * @var string
      */
-    private $table = 'logs';
+    private $table;
 
     /**
-     * @var array default fields that are stored in db
+     * default fields that are stored in db
+     *
+     * @var array|string[]
      */
-    private $defaultfields = array('id', 'channel', 'level', 'message', 'time');
+    private $defaultFields;
 
     /**
-     * @var string[] additional fields to be stored in the database
+     * additional fields to be stored in the database
      *
      * For each field $field, an additional context field with the name $field
      * is expected along the message, and further the database needs to have these fields
      * as the values are stored in the column name $field.
+     *
+     * @var array|string[]
      */
-    private $additionalFields = array();
+    private $additionalFields;
 
     /**
      * @var array
      */
-    private $fields = array();
-
+    private $fields;
 
     /**
      * Constructor of this class, sets the PDO and calls parent constructor
      *
      * @param PDO $pdo PDO Connector for the database
-     * @param bool $table Table in the database to store the logs in
+     * @param string $table Table in the database to store the logs in
      * @param array $additionalFields Additional Context Parameters to store in database
+     * @param bool $skipDatabaseModifications Defines whether attempts to alter database should be skipped
      * @param bool|int $level Debug level which this handler should store
      * @param bool $bubble
-     * @param bool $skipDatabaseModifications Defines whether attempts to alter database should be skipped
      */
     public function __construct(
-        PDO $pdo = null,
-        $table,
-        $additionalFields = array(),
-        $level = Logger::DEBUG,
-        $bubble = true,
-        $skipDatabaseModifications = false
-    )
-    {
-        if (!is_null($pdo)) {
-            $this->pdo = $pdo;
-        }
+        PDO $pdo,
+        string $table,
+        array $additionalFields = [],
+        bool $skipDatabaseModifications = false,
+        int $level = Logger::DEBUG,
+        bool $bubble = true
+    ) {
+        parent::__construct($level, $bubble);
+
+        $this->initialized = false;
+        $this->defaultFields = [
+            'id',
+            'channel',
+            'level',
+            'message',
+            'time',
+        ];
+        $this->pdo = $pdo;
         $this->table = $table;
         $this->additionalFields = $additionalFields;
-        parent::__construct($level, $bubble);
 
         if ($skipDatabaseModifications) {
             $this->mergeDefaultAndAdditionalFields();
@@ -92,16 +110,24 @@ class MySQLHandler extends AbstractProcessingHandler
     /**
      * Initializes this handler by creating the table if it not exists
      */
-    private function initialize()
+    private function initialize(): void
     {
-        $this->pdo->exec(
-            'CREATE TABLE IF NOT EXISTS `' . $this->table . '` '
-            . '(id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, channel VARCHAR(255), level INTEGER, message LONGTEXT, time INTEGER UNSIGNED, INDEX(channel) USING HASH, INDEX(level) USING HASH, INDEX(time) USING BTREE)'
-        );
+        $this->pdo->exec("
+            CREATE TABLE IF NOT EXISTS `{$this->table}` (
+                id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, 
+                channel VARCHAR(255), 
+                level INTEGER, 
+                message LONGTEXT, 
+                time INTEGER UNSIGNED, 
+                INDEX(channel) USING HASH, 
+                INDEX(level) USING HASH, 
+                INDEX(time) USING BTREE
+            );
+        ");
 
         //Read out actual columns
-        $actualFields = array();
-        $rs = $this->pdo->query('SELECT * FROM `' . $this->table . '` LIMIT 0');
+        $actualFields = [];
+        $rs = $this->pdo->query("SELECT * FROM `{$this->table}` LIMIT 0;");
         for ($i = 0; $i < $rs->columnCount(); $i++) {
             $col = $rs->getColumnMeta($i);
             $actualFields[] = $col['name'];
@@ -111,21 +137,21 @@ class MySQLHandler extends AbstractProcessingHandler
         $removedColumns = array_diff(
             $actualFields,
             $this->additionalFields,
-            $this->defaultfields
+            $this->defaultFields
         );
         $addedColumns = array_diff($this->additionalFields, $actualFields);
 
         //Remove columns
-        if (!empty($removedColumns)) {
+        if (! empty($removedColumns)) {
             foreach ($removedColumns as $c) {
-                $this->pdo->exec('ALTER TABLE `' . $this->table . '` DROP `' . $c . '`;');
+                $this->pdo->exec("ALTER TABLE `{$this->table}` DROP `$c`;");
             }
         }
 
         //Add columns
-        if (!empty($addedColumns)) {
+        if (! empty($addedColumns)) {
             foreach ($addedColumns as $c) {
-                $this->pdo->exec('ALTER TABLE `' . $this->table . '` add `' . $c . '` TEXT NULL DEFAULT NULL;');
+                $this->pdo->exec("ALTER TABLE `{$this->table}` ADD `{$c}` TEXT NULL DEFAULT NULL;");
             }
         }
 
@@ -137,7 +163,7 @@ class MySQLHandler extends AbstractProcessingHandler
     /**
      * Prepare the sql statment depending on the fields that should be written to the database
      */
-    private function prepareStatement()
+    private function prepareStatement(): void
     {
         //Prepare statement
         $columns = "";
@@ -157,7 +183,7 @@ class MySQLHandler extends AbstractProcessingHandler
         }
 
         $this->statement = $this->pdo->prepare(
-            'INSERT INTO `' . $this->table . '` (' . $columns . ') VALUES (' . $fields . ')'
+            "INSERT INTO `{$this->table}` ({$columns}) VALUES ({$fields});"
         );
     }
 
@@ -165,19 +191,19 @@ class MySQLHandler extends AbstractProcessingHandler
     /**
      * Writes the record down to the log of the implementing handler
      *
-     * @param  $record []
+     * @param  array $record
      * @return void
      */
     protected function write(array $record): void
     {
-        if (!$this->initialized) {
+        if (! $this->initialized) {
             $this->initialize();
         }
 
         /**
          * reset $fields with default values
          */
-        $this->fields = $this->defaultfields;
+        $this->fields = $this->defaultFields;
 
         /*
          * merge $record['context'] and $record['extra'] as additional info of Processors
@@ -198,7 +224,7 @@ class MySQLHandler extends AbstractProcessingHandler
 
         // unset array keys that are passed put not defined to be stored, to prevent sql errors
         foreach ($contentArray as $key => $context) {
-            if (!in_array($key, $this->fields)) {
+            if (! in_array($key, $this->fields)) {
                 unset($contentArray[$key]);
                 unset($this->fields[array_search($key, $this->fields)]);
                 continue;
@@ -231,8 +257,8 @@ class MySQLHandler extends AbstractProcessingHandler
     /**
      * Merges default and additional fields into one array
      */
-    private function mergeDefaultAndAdditionalFields()
+    private function mergeDefaultAndAdditionalFields(): void
     {
-        $this->defaultfields = array_merge($this->defaultfields, $this->additionalFields);
+        $this->defaultFields = array_merge($this->defaultFields, $this->additionalFields);
     }
 }
