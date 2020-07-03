@@ -2,8 +2,8 @@
 
 namespace MySQLHandler;
 
-use Monolog\Logger;
 use Monolog\Handler\AbstractProcessingHandler;
+use Monolog\Logger;
 use PDO;
 use PDOStatement;
 
@@ -54,18 +54,18 @@ class MySQLHandler extends AbstractProcessingHandler
     /**
      * @var array
      */
-    private $fields           = array();
+    private $fields = array();
 
 
     /**
      * Constructor of this class, sets the PDO and calls parent constructor
      *
-     * @param PDO      $pdo                       PDO Connector for the database
-     * @param bool     $table                     Table in the database to store the logs in
-     * @param array    $additionalFields          Additional Context Parameters to store in database
-     * @param bool|int $level                     Debug level which this handler should store
-     * @param bool     $bubble
-     * @param bool     $skipDatabaseModifications Defines whether attempts to alter database should be skipped
+     * @param PDO $pdo PDO Connector for the database
+     * @param bool $table Table in the database to store the logs in
+     * @param array $additionalFields Additional Context Parameters to store in database
+     * @param bool|int $level Debug level which this handler should store
+     * @param bool $bubble
+     * @param bool $skipDatabaseModifications Defines whether attempts to alter database should be skipped
      */
     public function __construct(
         PDO $pdo = null,
@@ -74,8 +74,9 @@ class MySQLHandler extends AbstractProcessingHandler
         $level = Logger::DEBUG,
         $bubble = true,
         $skipDatabaseModifications = false
-    ) {
-       if (!is_null($pdo)) {
+    )
+    {
+        if (!is_null($pdo)) {
             $this->pdo = $pdo;
         }
         $this->table = $table;
@@ -94,13 +95,13 @@ class MySQLHandler extends AbstractProcessingHandler
     private function initialize()
     {
         $this->pdo->exec(
-            'CREATE TABLE IF NOT EXISTS `'.$this->table.'` '
-            .'(id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, channel VARCHAR(255), level INTEGER, message LONGTEXT, time INTEGER UNSIGNED, INDEX(channel) USING HASH, INDEX(level) USING HASH, INDEX(time) USING BTREE)'
+            'CREATE TABLE IF NOT EXISTS `' . $this->table . '` '
+            . '(id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, channel VARCHAR(255), level INTEGER, message LONGTEXT, time INTEGER UNSIGNED, INDEX(channel) USING HASH, INDEX(level) USING HASH, INDEX(time) USING BTREE)'
         );
 
         //Read out actual columns
         $actualFields = array();
-        $rs = $this->pdo->query('SELECT * FROM `'.$this->table.'` LIMIT 0');
+        $rs = $this->pdo->query('SELECT * FROM `' . $this->table . '` LIMIT 0');
         for ($i = 0; $i < $rs->columnCount(); $i++) {
             $col = $rs->getColumnMeta($i);
             $actualFields[] = $col['name'];
@@ -117,14 +118,14 @@ class MySQLHandler extends AbstractProcessingHandler
         //Remove columns
         if (!empty($removedColumns)) {
             foreach ($removedColumns as $c) {
-                $this->pdo->exec('ALTER TABLE `'.$this->table.'` DROP `'.$c.'`;');
+                $this->pdo->exec('ALTER TABLE `' . $this->table . '` DROP `' . $c . '`;');
             }
         }
 
         //Add columns
         if (!empty($addedColumns)) {
             foreach ($addedColumns as $c) {
-                $this->pdo->exec('ALTER TABLE `'.$this->table.'` add `'.$c.'` TEXT NULL DEFAULT NULL;');
+                $this->pdo->exec('ALTER TABLE `' . $this->table . '` add `' . $c . '` TEXT NULL DEFAULT NULL;');
             }
         }
 
@@ -140,7 +141,7 @@ class MySQLHandler extends AbstractProcessingHandler
     {
         //Prepare statement
         $columns = "";
-        $fields  = "";
+        $fields = "";
         foreach ($this->fields as $key => $f) {
             if ($f == 'id') {
                 continue;
@@ -164,7 +165,7 @@ class MySQLHandler extends AbstractProcessingHandler
     /**
      * Writes the record down to the log of the implementing handler
      *
-     * @param  $record[]
+     * @param  $record []
      * @return void
      */
     protected function write(array $record): void
@@ -189,15 +190,15 @@ class MySQLHandler extends AbstractProcessingHandler
 
         //'context' contains the array
         $contentArray = array_merge(array(
-                                        'channel' => $record['channel'],
-                                        'level' => $record['level'],
-                                        'message' => $record['message'],
-                                        'time' => $record['datetime']->format('U')
-                                    ), $record['context']);
+            'channel' => $record['channel'],
+            'level' => $record['level'],
+            'message' => $record['message'],
+            'time' => $record['datetime']->format('U')
+        ), $record['context']);
 
         // unset array keys that are passed put not defined to be stored, to prevent sql errors
-        foreach($contentArray as $key => $context) {
-            if (! in_array($key, $this->fields)) {
+        foreach ($contentArray as $key => $context) {
+            if (!in_array($key, $this->fields)) {
                 unset($contentArray[$key]);
                 unset($this->fields[array_search($key, $this->fields)]);
                 continue;
@@ -211,18 +212,18 @@ class MySQLHandler extends AbstractProcessingHandler
 
         $this->prepareStatement();
 
-	    //Remove unused keys
-	    foreach($this->additionalFields as $key => $context) {
-		    if(! isset($contentArray[$key])) {
-			    unset($this->additionalFields[$key]);
-		    }
-	    }
+        //Remove unused keys
+        foreach ($this->additionalFields as $key => $context) {
+            if (!isset($contentArray[$key])) {
+                unset($this->additionalFields[$key]);
+            }
+        }
 
         //Fill content array with "null" values if not provided
         $contentArray = $contentArray + array_combine(
-            $this->additionalFields,
-            array_fill(0, count($this->additionalFields), null)
-        );
+                $this->additionalFields,
+                array_fill(0, count($this->additionalFields), null)
+            );
 
         $this->statement->execute($contentArray);
     }
