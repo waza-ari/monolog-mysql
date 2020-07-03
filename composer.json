@@ -11,6 +11,7 @@
         }
     ],
     "require": {
+        "ext-pdo": "*",
         "monolog/monolog": ">1.4.0",
         "ext-pdo_mysql": "*"
     },
