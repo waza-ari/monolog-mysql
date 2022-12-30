@@ -76,13 +76,13 @@ class MySQLHandler extends AbstractProcessingHandler
     {
         $this->pdo->exec("
             CREATE TABLE IF NOT EXISTS `{$this->mySQLRecord->getTable()}` (
-                id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, 
-                channel VARCHAR(255), 
-                level INTEGER, 
-                message LONGTEXT, 
-                time INTEGER UNSIGNED, 
-                INDEX(channel) USING HASH, 
-                INDEX(level) USING HASH, 
+                id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                channel VARCHAR(255),
+                level INTEGER,
+                message LONGTEXT,
+                time INTEGER UNSIGNED,
+                INDEX(channel) USING HASH,
+                INDEX(level) USING HASH,
                 INDEX(time) USING BTREE
             );
         ");
@@ -123,7 +123,7 @@ class MySQLHandler extends AbstractProcessingHandler
     }
 
     /**
-     * Prepare the sql statment depending on the fields that should be written to the database
+     * Prepare the sql statement depending on the fields that should be written to the database
      * @param array $content
      */
     private function prepareStatement(array $content): void
@@ -169,18 +169,18 @@ class MySQLHandler extends AbstractProcessingHandler
          * getting added to $record['extra']
          * @see https://github.com/Seldaek/monolog/blob/master/doc/02-handlers-formatters-processors.md
          */
-        if (isset($record['extra'])) {
-            $record['context'] = array_merge($record['context'], $record['extra']);
-        }
-
         $content = $this->mySQLRecord->filterContent(array_merge([
             'channel' => $record['channel'],
             'level' => $record['level'],
             'message' => $record['message'],
             'time' => $record['datetime']->format('U'),
-        ], $record['context']));
+        ], $record['context'], $record['extra']));
 
         $this->prepareStatement($content);
+
+        if (array_key_exists('id', $content)) {
+            unset($content['id']);
+        }
 
         $this->statement->execute($content);
     }

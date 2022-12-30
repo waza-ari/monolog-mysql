@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests;
 
 use Faker\Factory;
-use Monolog\Logger;
 use MySQLHandler\MySQLRecord;
 use PHPUnit\Framework\TestCase;
 
@@ -15,6 +14,14 @@ use PHPUnit\Framework\TestCase;
  */
 class MySQLRecordTest extends TestCase
 {
+    protected static array $defaultColumns = [
+        'id',
+        'channel',
+        'level',
+        'message',
+        'time',
+    ];
+
     /**
      * @test
      * @return void
@@ -25,14 +32,11 @@ class MySQLRecordTest extends TestCase
         $table = strtolower($faker->unique()->word);
         $columns = array_pad([], 5, strtolower($faker->unique()->word));
         $record = new MySQLRecord($table, $columns);
+        $this->assertEquals(static::$defaultColumns, $record->getDefaultColumns());
+        $this->assertEquals($columns, $record->getAdditionalColumns());
 
-        $this->assertEquals(array_merge([
-            'id',
-            'channel',
-            'level',
-            'message',
-            'time',
-        ], $columns), $record->getColumns());
+        $this->assertEquals(array_merge(static::$defaultColumns, $columns), $record->getColumns());
+        $this->assertEquals($table, $record->getTable());
     }
 
     /**
@@ -45,10 +49,14 @@ class MySQLRecordTest extends TestCase
         $table = strtolower($faker->unique()->word);
         $columns = array_pad([], 5, strtolower($faker->unique()->word));
         $record = new MySQLRecord($table, $columns);
+        $this->assertEquals(static::$defaultColumns, $record->getDefaultColumns());
+        $this->assertEquals($columns, $record->getAdditionalColumns());
+        // Monolog 3.2.0 contains enum Level class while old static method deprecated
+        $loggerLevels = class_exists(\Monolog\Level::class) ? \Monolog\Level::VALUES : \Monolog\Logger::getLevels();
 
         $data = array_merge([
             'channel' => strtolower($faker->unique()->word),
-            'level' => $faker->randomElement(Logger::getLevels()),
+            'level' => $faker->randomElement($loggerLevels),
             'message' => $faker->text,
             'time' => $faker->dateTime,
         ], array_fill_keys($columns, $faker->text));
@@ -56,6 +64,7 @@ class MySQLRecordTest extends TestCase
         $content = $record->filterContent($data);
 
         $this->assertEquals($data, $content);
+        $this->assertEquals($table, $record->getTable());
     }
 
     /**
@@ -69,10 +78,14 @@ class MySQLRecordTest extends TestCase
         $columns = array_pad([], 5, strtolower($faker->unique()->word));
         $outOfColumns = array_pad([], 5, strtolower($faker->unique()->word));
         $record = new MySQLRecord($table, $columns);
+        $this->assertEquals(static::$defaultColumns, $record->getDefaultColumns());
+        $this->assertEquals($columns, $record->getAdditionalColumns());
+        // Monolog 3.2.0 contains enum Level class while old static method deprecated
+        $loggerLevels = class_exists(\Monolog\Level::class) ? \Monolog\Level::VALUES : \Monolog\Logger::getLevels();
 
         $data = array_merge([
             'channel' => strtolower($faker->unique()->word),
-            'level' => $faker->randomElement(Logger::getLevels()),
+            'level' => $faker->randomElement($loggerLevels),
             'message' => $faker->text,
             'time' => $faker->dateTime,
         ], array_fill_keys($outOfColumns, $faker->text));
@@ -87,5 +100,6 @@ class MySQLRecordTest extends TestCase
         array_map(function ($key) use ($content) {
             $this->assertArrayNotHasKey($key, $content);
         }, $outOfColumns);
+        $this->assertEquals($table, $record->getTable());
     }
 }
