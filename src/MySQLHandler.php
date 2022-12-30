@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace MySQLHandler;
 
 use Monolog\Handler\AbstractProcessingHandler;
-use Monolog\Logger;
+use Monolog\Level;
+use Monolog\LogRecord;
 use PDO;
 use PDOStatement;
 
@@ -51,7 +52,7 @@ class MySQLHandler extends AbstractProcessingHandler
      * @param string $table Table in the database to store the logs in
      * @param array $additionalFields Additional Context Parameters to store in database
      * @param bool $initialize Defines whether attempts to alter database should be skipped
-     * @param bool|int $level Debug level which this handler should store
+     * @param int|string|Level $level Debug level which this handler should store
      * @param bool $bubble
      */
     public function __construct(
@@ -59,7 +60,7 @@ class MySQLHandler extends AbstractProcessingHandler
         string $table,
         array $additionalFields = [],
         bool $initialize = false,
-        int $level = Logger::DEBUG,
+        int|string|Level $level = Level::Debug,
         bool $bubble = true
     ) {
         parent::__construct($level, $bubble);
@@ -155,10 +156,10 @@ class MySQLHandler extends AbstractProcessingHandler
     /**
      * Writes the record down to the log of the implementing handler
      *
-     * @param  array $record
+     * @param  LogRecord $record
      * @return void
      */
-    protected function write(array $record): void
+    protected function write(LogRecord $record): void
     {
         if (! $this->initialized) {
             $this->initialize();

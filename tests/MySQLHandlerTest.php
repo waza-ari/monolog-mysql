@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests;
 
 use Faker\Factory;
+use Monolog\Level;
+use Monolog\LogRecord;
 use MySQLHandler\MySQLHandler;
 use MySQLHandler\MySQLRecord;
 use PHPUnit\Framework\TestCase;
@@ -37,11 +39,11 @@ class MySQLHandlerTest extends TestCase
         string $expectedInsert,
         array $expectedParams,
         array $initialColumns,
-        array $record,
+        LogRecord $record,
         string $table,
         array $additionalFields = [],
         bool $initialize = false,
-        int $level = 100,
+        int|string|Level $level = Level::Debug,
         bool $bubble = true
     ): void {
         $pdo = $this->createMock(\PDO::class);
@@ -135,14 +137,14 @@ class MySQLHandlerTest extends TestCase
                 ['id' => 'foobaz']
             );
 
-            $record = [
-                'datetime' => \DateTimeImmutable::createFromFormat('U', strval($time)),
-                'channel' => $channel,
-                'level' => \Monolog\Logger::toMonologLevel($level),
-                'message' => $msg,
-                'context' => $context,
-                'extra' => $extra
-            ];
+            $record = new LogRecord(
+                \DateTimeImmutable::createFromFormat('U', strval($time)),
+                $channel,
+                \Monolog\Logger::toMonologLevel($level),
+                $msg,
+                $context,
+                $extra
+            );
 
             $params = array_merge(
                 [
