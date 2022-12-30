@@ -1,0 +1,46 @@
+# GitHub Action
+name: Tests
+on: [push, pull_request]
+
+jobs:
+  tests:
+    name: Tests PHP ${{ matrix.php-versions }}
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest]
+        php-versions: ['8.0', '8.1']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Docs: https://github.com/shivammathur/setup-php
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          coverage: xdebug
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --no-interaction --optimize-autoloader
+
+      - name: Run unit tests
+        run: vendor/bin/phpunit -c phpunit.xml.dist --coverage-clover=report/logs/clover.xml
+
+      - name: Upload coverage results to Coveralls
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          composer global require php-coveralls/php-coveralls -n
+          php-coveralls --coverage_clover=report/logs/clover.xml --json_path=report/logs/coveralls-upload.json -v
