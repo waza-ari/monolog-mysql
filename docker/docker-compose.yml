@@ -9,7 +9,7 @@ services:
     tty: true
     build:
       dockerfile: Dockerfile
-      context: ./
+      context: ./workspace
     restart: always
     volumes:
       - ../:/var/www/html
@@ -17,13 +17,32 @@ services:
       - backend
 
   mysql:
-    image: mysql:5.7.30
-    environment:
-      - MYSQL_ROOT_PASSWORD=example
-      - MYSQL_DATABASE=example
+    restart: always
+    build:
+      dockerfile: Dockerfile
+      context: ./mysql
     volumes:
-     - .data/mysql:/var/lib/mysql
+     - ./mysql/.data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: monolog_mysql_sample
     networks:
       - backend
     ports:
-      - 3306:3306
+      - "3306:3306"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5.2
+    restart: always
+    ports:
+      - "80:80"
+    links:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+      PMA_USER: root
+      PMA_PASSWORD: root
+    networks:
+      - backend

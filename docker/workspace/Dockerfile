@@ -1,7 +1,7 @@
 #
 # PHP Setup
 #
-FROM php:7.2.31-cli
+FROM php:8.2-cli
 
 #
 # Install dependencies
@@ -46,11 +46,17 @@ RUN set -xe; \
     usermod -u ${APP_USER_ID} -m -d /home/workspace workspace -s $(which bash) && \
     chown -R workspace:workspace /var/www/html
 
+
+#
+# Xdebug Setup
+#
+ENV XDEBUG_MODE=coverage
+
 #
 # Set Timezone
 #
 
-ARG TIME_ZONE='Asia/Seoul'
+ARG TIME_ZONE='UTC'
 
 RUN ln -snf /usr/share/zoneinfo/${TIME_ZONE} /etc/localtime && echo ${TIME_ZONE} > /etc/timezone
 
@@ -58,13 +64,9 @@ RUN ln -snf /usr/share/zoneinfo/${TIME_ZONE} /etc/localtime && echo ${TIME_ZONE}
 # Composer Setup
 #
 
-ARG COMPOSER_VERSION=1.10.10
-ARG COMPOSER_REPO_PACKAGIST='https://packagist.jp'
-
+ARG COMPOSER_VERSION=2.6.2
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer --version=${COMPOSER_VERSION} && \
-    composer config -g repos.packagist composer ${COMPOSER_REPO_PACKAGIST} && \
-    composer global require hirak/prestissimo --no-interaction
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer --version=${COMPOSER_VERSION}
 
 WORKDIR /var/www/html

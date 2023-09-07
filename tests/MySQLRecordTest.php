@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests;
 
 use Faker\Factory;
+use Monolog\Level;
 use Monolog\Logger;
 use MySQLHandler\MySQLRecord;
 use PHPUnit\Framework\TestCase;
@@ -48,7 +49,7 @@ class MySQLRecordTest extends TestCase
 
         $data = array_merge([
             'channel' => strtolower($faker->unique()->word),
-            'level' => $faker->randomElement(Logger::getLevels()),
+            'level' => $faker->randomElement(Level::NAMES),
             'message' => $faker->text,
             'time' => $faker->dateTime,
         ], array_fill_keys($columns, $faker->text));
@@ -72,7 +73,7 @@ class MySQLRecordTest extends TestCase
 
         $data = array_merge([
             'channel' => strtolower($faker->unique()->word),
-            'level' => $faker->randomElement(Logger::getLevels()),
+            'level' => $faker->randomElement(Level::NAMES),
             'message' => $faker->text,
             'time' => $faker->dateTime,
         ], array_fill_keys($outOfColumns, $faker->text));
@@ -88,4 +89,5 @@ class MySQLRecordTest extends TestCase
             $this->assertArrayNotHasKey($key, $content);
         }, $outOfColumns);
     }
+
 }

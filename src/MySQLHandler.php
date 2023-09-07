@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace MySQLHandler;
 
 use Monolog\Handler\AbstractProcessingHandler;
+use Monolog\Level;
 use Monolog\Logger;
+use Monolog\LogRecord;
 use PDO;
 use PDOStatement;
 
@@ -23,26 +25,26 @@ class MySQLHandler extends AbstractProcessingHandler
      *
      * @var bool
      */
-    private $initialized;
+    private bool $initialized;
 
     /**
      * pdo object of database connection
      *
      * @var PDO
      */
-    protected $pdo;
+    protected PDO $pdo;
 
     /**
      * statement to insert a new record
      *
      * @var PDOStatement
      */
-    private $statement;
+    private PDOStatement $statement;
 
     /**
      * @var MySQLRecord
      */
-    private $mySQLRecord;
+    private MySQLRecord $mySQLRecord;
 
     /**
      * Constructor of this class, sets the PDO and calls parent constructor
@@ -51,7 +53,7 @@ class MySQLHandler extends AbstractProcessingHandler
      * @param string $table Table in the database to store the logs in
      * @param array $additionalFields Additional Context Parameters to store in database
      * @param bool $initialize Defines whether attempts to alter database should be skipped
-     * @param bool|int $level Debug level which this handler should store
+     * @param int|Level|string $level Debug level which this handler should store
      * @param bool $bubble
      */
     public function __construct(
@@ -59,7 +61,7 @@ class MySQLHandler extends AbstractProcessingHandler
         string $table,
         array $additionalFields = [],
         bool $initialize = false,
-        int $level = Logger::DEBUG,
+        int|Level|string $level = Level::Debug,
         bool $bubble = true
     ) {
         parent::__construct($level, $bubble);
@@ -123,19 +125,22 @@ class MySQLHandler extends AbstractProcessingHandler
     }
 
     /**
-     * Prepare the sql statment depending on the fields that should be written to the database
+     * Prepare the sql statement depending on the fields that should be written to the database
      * @param array $content
      */
     private function prepareStatement(array $content): void
     {
+        // Remove 'id' column if it was passed
+        // since it will be auto-incremented and should
+        // not be set in the query
+        $keys = array_filter(array_keys($content), function($key) {
+            return $key != 'id';
+        });
+
         $columns = '';
         $fields = '';
 
-        foreach (array_keys($content) as $key => $f) {
-            if ($f == 'id') {
-                continue;
-            }
-
+        foreach ($keys as $key => $f) {
             if (empty($columns)) {
                 $columns .= $f;
                 $fields .= ":{$f}";
@@ -155,10 +160,10 @@ class MySQLHandler extends AbstractProcessingHandler
     /**
      * Writes the record down to the log of the implementing handler
      *
-     * @param  array $record
+     * @param LogRecord $record
      * @return void
      */
-    protected function write(array $record): void
+    protected function write(LogRecord $record): void
     {
         if (! $this->initialized) {
             $this->initialize();
@@ -169,16 +174,16 @@ class MySQLHandler extends AbstractProcessingHandler
          * getting added to $record['extra']
          * @see https://github.com/Seldaek/monolog/blob/master/doc/02-handlers-formatters-processors.md
          */
-        if (isset($record['extra'])) {
-            $record['context'] = array_merge($record['context'], $record['extra']);
+        if (isset($record->extra)) {
+            $record->with(context: array_merge($record->context, $record->extra));
         }
 
         $content = $this->mySQLRecord->filterContent(array_merge([
-            'channel' => $record['channel'],
-            'level' => $record['level'],
-            'message' => $record['message'],
-            'time' => $record['datetime']->format('U'),
-        ], $record['context']));
+            'channel' => $record->channel,
+            'level' => $record->level->value,
+            'message' => $record->message,
+            'time' => $record->datetime->format('U'),
+        ], $record->context));
 
         $this->prepareStatement($content);
 
