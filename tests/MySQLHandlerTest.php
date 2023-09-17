@@ -10,21 +10,20 @@ use HJerichen\DBUnit\Dataset\Dataset;
 use HJerichen\DBUnit\Dataset\DatasetArray;
 use HJerichen\DBUnit\MySQLTestCaseTrait;
 use Monolog\Level;
+use Monolog\Logger;
 use MySQLHandler\MySQLHandler;
 use PDO;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LogLevel;
 
 /**
  * Class MySQLRecordTest
  * @package Tests
  */
-class MySQLHandlerTest extends TestCase {
-
+class MySQLHandlerTest extends TestCase
+{
     use MySQLTestCaseTrait;
 
     private PDO $database;
-
     private readonly string $tableName;
     private readonly Generator $faker;
 
@@ -34,7 +33,6 @@ class MySQLHandlerTest extends TestCase {
         $this->tableName = 'log';
         $this->faker = Factory::create();
     }
-
 
     /**
      * @test
@@ -49,15 +47,16 @@ class MySQLHandlerTest extends TestCase {
         $level = $this->faker->randomElement(Level::VALUES);
         $additionalFieldNames = $this->faker->words(3);
         $additionalFields = [];
-        foreach ($additionalFieldNames AS $fieldName) {
+        foreach ($additionalFieldNames as $fieldName) {
             $additionalFields[$fieldName] = $this->faker->sentence();
         }
 
         // Create MysqlHandler with some random, additional fields
-        $mySQLHandler = new MySQLHandler($this->getDatabase(), $this->tableName, array_keys($additionalFields), false, $level);
+        $mySQLHandler = new MySQLHandler($this->getDatabase(), $this->tableName, array_keys($additionalFields), false,
+            $level);
 
         // Create logger
-        $logger = new \Monolog\Logger($this->name(), [$mySQLHandler]);
+        $logger = new Logger($this->name(), [$mySQLHandler]);
 
         // Add new record and fill additional fields
         $logger->addRecord($level, $message, $additionalFields);
@@ -72,40 +71,27 @@ class MySQLHandlerTest extends TestCase {
     }
 
     /**
-     * @test
+     * Helper method which drops the monolog mysql
+     * table used for storing the log records.
+     *
      * @return void
      */
-    public function alter_table_schame_in_initialisation(): void
+    private function dropTable()
     {
-        $this->dropTable();
-
-        $additionalFieldNames = $this->faker->words(5);
-        $additionalFields = [];
-        foreach ($additionalFieldNames AS $fieldName) {
-            $additionalFields[$fieldName] = $this->faker->sentence();
-        }
-
-        $mySQLHandler = new MySQLHandler($this->getDatabase(), $this->tableName, array_keys($additionalFields), false);
-        $logger = new \Monolog\Logger($this->name(), [$mySQLHandler]);
-        $logger->info('test', $additionalFields);
-
-        // now create a new random schema which should
-        // cause the initialisation process to generate a data migration
-        // and schema update
-        $additionalFieldNames = $this->faker->words(5);
-        $additionalFields = [];
-        foreach ($additionalFieldNames AS $fieldName) {
-            $additionalFields[$fieldName] = $this->faker->sentence();
-        }
-
-        $mySQLHandler = new MySQLHandler($this->getDatabase(), $this->tableName, array_keys($additionalFields), false);
-        $logger = new \Monolog\Logger($this->name(), [$mySQLHandler]);
-        $logger->info('test', $additionalFields);
-
-        $this->expectNotToPerformAssertions();
+        $this->getDatabase()->prepare("DROP TABLE IF EXISTS `{$this->tableName}`;")->execute();
     }
 
-    private function assertDatasetEqualsCurrentOne(DatasetArray $expected):void{
+    protected function getDatabase(): PDO
+    {
+        if (!isset($this->database)) {
+            $this->database = new PDO('mysql:host=mysql;dbname=monolog_mysql_sample;', 'root', 'root');
+        }
+
+        return $this->database;
+    }
+
+    private function assertDatasetEqualsCurrentOne(DatasetArray $expected): void
+    {
         try {
             $this->assertDatasetEqualsCurrent($expected);
             $this->expectNotToPerformAssertions();
@@ -114,26 +100,42 @@ class MySQLHandlerTest extends TestCase {
         }
     }
 
+    /**
+     * @test
+     * @return void
+     */
+    public function alter_table_schema_in_initialisation(): void
+    {
+        $this->dropTable();
+
+        $additionalFieldNames = $this->faker->words(5);
+        $additionalFields = [];
+        foreach ($additionalFieldNames as $fieldName) {
+            $additionalFields[$fieldName] = $this->faker->sentence();
+        }
+
+        $mySQLHandler = new MySQLHandler($this->getDatabase(), $this->tableName, array_keys($additionalFields), false);
+        $logger = new Logger($this->name(), [$mySQLHandler]);
+        $logger->info('test', $additionalFields);
+
+        // now create a new random schema which should
+        // cause the initialisation process to generate a data migration
+        // and schema update
+        $additionalFieldNames = $this->faker->words(5);
+        $additionalFields = [];
+        foreach ($additionalFieldNames as $fieldName) {
+            $additionalFields[$fieldName] = $this->faker->sentence();
+        }
+
+        $mySQLHandler = new MySQLHandler($this->getDatabase(), $this->tableName, array_keys($additionalFields), false);
+        $logger = new Logger($this->name(), [$mySQLHandler]);
+        $logger->info('test', $additionalFields);
+
+        $this->expectNotToPerformAssertions();
+    }
+
     protected function getDatasetForSetup(): Dataset
     {
         return new DatasetArray([$this->tableName => []]);
-    }
-
-    protected function getDatabase(): PDO
-    {
-        if (!isset($this->database)) {
-            $this->database = new PDO('mysql:host=mysql;dbname=monolog_mysql_sample;','root','root');
-        }
-        return $this->database;
-    }
-
-    /**
-     * Helper method which drops the monolog mysql
-     * table used for storing the log records.
-     *
-     * @return void
-     */
-    private function dropTable() {
-        $this->getDatabase()->prepare("DROP TABLE IF EXISTS `{$this->tableName}`;")->execute();
     }
 }

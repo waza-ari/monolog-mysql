@@ -22,7 +22,7 @@ services:
       dockerfile: Dockerfile
       context: ./mysql
     volumes:
-     - ./mysql/.data:/var/lib/mysql
+      - ./mysql/.data:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: monolog_mysql_sample

@@ -37,8 +37,8 @@ class MySQLRecord
 
     /**
      * MySQLRecord constructor.
-     * @param string $table
-     * @param array $additionalColumns
+     * @param  string  $table
+     * @param  array  $additionalColumns
      */
     public function __construct(string $table, array $additionalColumns = [])
     {
@@ -56,14 +56,22 @@ class MySQLRecord
     }
 
     /**
-     * @param array $content
+     * @param  array  $content
      * @return array
      */
     public function filterContent(array $content): array
     {
-        return array_filter($content, function($key) {
+        return array_filter($content, function ($key) {
             return in_array($key, $this->getColumns());
         }, ARRAY_FILTER_USE_KEY);
+    }
+
+    /**
+     * @return array
+     */
+    public function getColumns(): array
+    {
+        return array_merge($this->defaultColumns, $this->additionalColumns);
     }
 
     /**
@@ -88,13 +96,5 @@ class MySQLRecord
     public function getAdditionalColumns(): array
     {
         return $this->additionalColumns;
-    }
-
-    /**
-     * @return array
-     */
-    public function getColumns(): array
-    {
-        return array_merge($this->defaultColumns, $this->additionalColumns);
     }
 }

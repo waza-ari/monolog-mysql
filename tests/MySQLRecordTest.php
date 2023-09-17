@@ -6,7 +6,6 @@ namespace Tests;
 
 use Faker\Factory;
 use Monolog\Level;
-use Monolog\Logger;
 use MySQLHandler\MySQLRecord;
 use PHPUnit\Framework\TestCase;
 
@@ -89,5 +88,4 @@ class MySQLRecordTest extends TestCase
             $this->assertArrayNotHasKey($key, $content);
         }, $outOfColumns);
     }
-
 }
