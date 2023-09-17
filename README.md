@@ -8,11 +8,10 @@ used for later analyzing and sorting.
 
 # Installation
 
-monolog-mysql is available via composer. Just add the following line to your required section in composer.json and do
-a `php composer.phar update`.
+monolog-mysql is available via composer: `composer require wazaari/monolog-mysql "^2.0"`.
 
-```
-"wazaari/monolog-mysql": "^1.0.0"
+```json
+"wazaari/monolog-mysql": "^2.0"
 ```
 
 # Usage
@@ -28,7 +27,8 @@ needs some parameters:
   below. _Defaults to an empty array()_
 - **$level** can be any of the standard Monolog logging levels. Use Monologs statically defined contexts. _Defaults to
   Logger::DEBUG_
-- **$bubble** _Defaults to true_
+- **$bubble** _Defaults to true_, defines whether they block the record or not if they handled it. Setting `bubble` to
+  false means that the handler will not pass the log on to following handlers.
 - **$skipDatabaseModifications** Defines whether we should skip any attempts to sync current database state with what's
   requested by the code (includes creating the table and adding / dropping fields). _Defaults to false_
 
@@ -51,7 +51,8 @@ CREATE TABLE `log`
 
 # Examples
 
-Given that `$pdo` is your database instance, you could use the class as follows:
+Given that `$pdo is your database instance, you could use the class as follows. For details about the context/name
+of a logger please refer to the [monolog documentation](https://github.com/Seldaek/monolog/blob/master/doc/01-usage.md).
 
 ```php
 //Import class
