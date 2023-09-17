@@ -6,12 +6,6 @@ It can log text messages to a specific table, and creates the table automaticall
 The class further allows to dynamically add extra attributes, which are stored in a separate database field, and can be
 used for later analyzing and sorting.
 
-# HELP WANTED
-
-As I do not use this project myself anymore and I do not find the time to maintain this project as it deserves I would
-be happy to find someone taking it over. Please contact me at danielherrmann+gitlab@posteo.de if you'd be interesting to
-take over that project. Thanks!
-
 # Installation
 
 monolog-mysql is available via composer. Just add the following line to your required section in composer.json and do
