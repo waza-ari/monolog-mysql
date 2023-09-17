@@ -1,7 +1,8 @@
 #
 # PHP Setup
 #
-FROM php:8.2-cli
+ARG PHP_CLI_VERSION
+FROM php:${PHP_CLI_VERSION}-cli
 
 #
 # Install dependencies

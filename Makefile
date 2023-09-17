@@ -1,4 +1,4 @@
-DOCKER_COMPOSE ?= cd docker && docker-compose -p monolog_mysql
+DOCKER_COMPOSE ?= docker-compose -p monolog_mysql
 
 .PHONY: start
 start: erase build up ## clean current environment, recreate dependencies and spin up again

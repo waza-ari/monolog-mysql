@@ -12,7 +12,7 @@ monolog-mysql is available via composer. Just add the following line to your req
 a `php composer.phar update`.
 
 ```
-"wazaari/monolog-mysql": ">1.0.0"
+"wazaari/monolog-mysql": "^1.0.0"
 ```
 
 # Usage
@@ -51,7 +51,7 @@ CREATE TABLE `log`
 
 # Examples
 
-Given that $pdo is your database instance, you could use the class as follows:
+Given that `$pdo` is your database instance, you could use the class as follows:
 
 ```php
 //Import class
@@ -66,6 +66,17 @@ $logger->pushHandler($mySQLHandler);
 
 //Now you can use the logger, and further attach additional information
 $logger->addWarning("This is a great message, woohoo!", array('username'  => 'John Doe', 'userid'  => 245));
+```
+
+# Test
+
+This extension is covered by phpunit tests for all supported PHP versions. To run the tests you can use the
+`docker-compose.yml` to spin up a test environment and run the tests:
+
+```
+docker-compose up -d
+docker exec -it workspace-php81 sh -c "vendor/bin/phpunit"
+docker exec -it workspace-php82 sh -c "vendor/bin/phpunit"
 ```
 
 # License
