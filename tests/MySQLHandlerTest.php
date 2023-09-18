@@ -40,7 +40,6 @@ class MySQLHandlerTest extends TestCase
      */
     public function create_mysql_handler_on_non_existing_table_and_insert_record_with_additional_fields(): void
     {
-
         $this->dropTable();
 
         $message = $this->faker->sentence();
@@ -52,8 +51,13 @@ class MySQLHandlerTest extends TestCase
         }
 
         // Create MysqlHandler with some random, additional fields
-        $mySQLHandler = new MySQLHandler($this->getDatabase(), $this->tableName, array_keys($additionalFields), false,
-            $level);
+        $mySQLHandler = new MySQLHandler(
+            $this->getDatabase(),
+            $this->tableName,
+            array_keys($additionalFields),
+            false,
+            $level
+        );
 
         // Create logger
         $logger = new Logger($this->name(), [$mySQLHandler]);
@@ -78,7 +82,7 @@ class MySQLHandlerTest extends TestCase
      */
     private function dropTable()
     {
-        $this->getDatabase()->prepare("DROP TABLE IF EXISTS `{$this->tableName}`;")->execute();
+        $this->getDatabase()->prepare('DROP TABLE IF EXISTS `'.$this->tableName.'`')->execute();
     }
 
     protected function getDatabase(): PDO
@@ -98,6 +102,57 @@ class MySQLHandlerTest extends TestCase
         } catch (ComparisonFailure $failure) {
             throw new ExpectationFailedException($failure->getMessage(), $failure);
         }
+    }
+
+    /**
+     * This test provokes a mysql error: SQLSTATE[HY093]
+     * with description: "Invalid parameter number: number of bound
+     * variables does not match number of tokens"
+     *
+     * @see https://github.com/waza-ari/monolog-mysql/issues/41
+     * @test
+     * @return void
+     */
+    public function provoke_sqlstate_hy093_number_of_bound_variables_does_not_match_number_of_tokens()
+    {
+        $this->dropTable();
+
+        $additionalFields = ['channel', 'CORRELATION', 'errorFile', 'errorLine', 'errorTrace'];
+        $mysqlHandler = new MySQLHandler(
+            $this->getDatabase(),
+            $this->tableName,
+            $additionalFields,
+            false,
+            Level::Info
+        );
+
+        $logger = new Logger($this->name(), [$mysqlHandler]);
+
+        $content = [
+            'id' => 11, // this is expected to be ignored and not inserted into database
+            'test1' => 'aaa',
+            'test2' => 'bbb'
+        ];
+
+        $message = 'test';
+        $logger->error($message, $content);
+
+        $expected = new DatasetArray([
+            $this->tableName => [
+                [
+                    'id' => 1,
+                    'channel' => $this->name(),
+                    'message' => $message,
+                    'level' => Level::Error->value,
+                    'CORRELATION' => null,
+                    'errorFile' => null,
+                    'errorLine' => null,
+                    'errorTrace' => null,
+                ],
+            ]
+        ]);
+
+        $this->assertDatasetEqualsCurrentOne($expected);
     }
 
     /**

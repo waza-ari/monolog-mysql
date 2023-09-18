@@ -86,15 +86,20 @@ class MySQLHandler extends AbstractProcessingHandler
          * @see https://github.com/Seldaek/monolog/blob/master/doc/02-handlers-formatters-processors.md
          */
         if (isset($record->extra)) {
-            $record->with(context: array_merge($record->context, $record->extra));
+            $record->with(context: [...$record->context, ...$record->extra]);
         }
 
-        $content = $this->mySQLRecord->filterContent(array_merge([
+        $content = [
             'channel' => $record->channel,
             'level' => $record->level->value,
             'message' => $record->message,
             'time' => $record->datetime->format('U'),
-        ], $record->context));
+            ...array_filter(
+                $record->context,
+                fn($key) => in_array($key, $this->mySQLRecord->getAdditionalColumns()),
+                ARRAY_FILTER_USE_KEY
+            )
+        ];
 
         $this->prepareStatement($content);
 
@@ -155,22 +160,18 @@ class MySQLHandler extends AbstractProcessingHandler
     }
 
     /**
-     * Prepare the sql statement depending on the fields that should be written to the database
+     * Prepare the sql statement depending on the fields that
+     * should be written to the database
+     *
      * @param  array  $content
      */
     private function prepareStatement(array $content): void
     {
-        // Remove 'id' column if it was passed
-        // since it will be auto-incremented and should
-        // not be set in the query
-        $keys = array_filter(array_keys($content), function ($key) {
-            return $key != 'id';
-        });
-
+        $keys = array_keys($content);
         $columns = '';
         $fields = '';
 
-        foreach ($keys as $key => $f) {
+        foreach ($keys as $f) {
             if (empty($columns)) {
                 $columns .= $f;
                 $fields .= ":{$f}";
