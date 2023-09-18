@@ -27,10 +27,10 @@ needs some parameters:
   below. _Defaults to an empty array()_
 - **$level** can be any of the standard Monolog logging levels. Use Monologs statically defined contexts. _Defaults to
   Logger::DEBUG_
+- **$skipTableInitialization** Defines whether we should skip any attempts to sync current database state with what's
+  requested by the code (includes creating the table and adding / dropping fields). _Defaults to false_
 - **$bubble** _Defaults to true_, defines whether they block the record or not if they handled it. Setting `bubble` to
   false means that the handler will not pass the log on to following handlers.
-- **$skipDatabaseModifications** Defines whether we should skip any attempts to sync current database state with what's
-  requested by the code (includes creating the table and adding / dropping fields). _Defaults to false_
 
 If $skipDatabaseModifications is set to true, please use the following query as a template to create the log table (with
 additional fields, if necessary)

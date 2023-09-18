@@ -49,22 +49,22 @@ class MySQLHandler extends AbstractProcessingHandler
      * @param  PDO  $pdo  PDO Connector for the database
      * @param  string  $table  Table in the database to store the logs in
      * @param  array  $additionalFields  Additional Context Parameters to store in database
-     * @param  bool  $initialize  Defines whether attempts to alter database should be skipped
      * @param  int|Level|string  $level  Debug level which this handler should store
+     * @param  bool  $skipTableInitialization  Defines whether attempts to alter database should be skipped. Useful if you want to use a own system for table schema migrations
      * @param  bool  $bubble
      */
     public function __construct(
         PDO $pdo,
         string $table,
         array $additionalFields = [],
-        bool $initialize = false,
         int|Level|string $level = Level::Debug,
+        bool $skipTableInitialization = false,
         bool $bubble = true
     ) {
         parent::__construct($level, $bubble);
 
         $this->pdo = $pdo;
-        $this->initialized = $initialize;
+        $this->initialized = $skipTableInitialization;
         $this->mySQLRecord = new MySQLRecord($table, $additionalFields);
     }
 
