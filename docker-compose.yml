@@ -1,0 +1,67 @@
+version: '3.4'
+
+networks:
+  backend:
+    driver: bridge
+
+services:
+  workspace-php81:
+    container_name: workspace-php81
+    tty: true
+    build:
+      dockerfile: Dockerfile
+      context: ./docker/workspace
+      args:
+        - PHP_CLI_VERSION=8.1
+    restart: always
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - backend
+
+  workspace-php82:
+    container_name: workspace-php82
+    tty: true
+    build:
+      dockerfile: Dockerfile
+      context: ./docker/workspace
+      args:
+        - PHP_CLI_VERSION=8.2
+    restart: always
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - backend
+
+  mysql:
+    container_name: mysql
+    restart: always
+    build:
+      dockerfile: Dockerfile
+      context: ./docker/mysql
+    volumes:
+      - ./docker/mysql/.data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: monolog_mysql_sample
+    networks:
+      - backend
+    ports:
+      - "3306:3306"
+
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin/phpmyadmin:5.2
+    restart: always
+    ports:
+      - "80:80"
+    links:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+      PMA_USER: root
+      PMA_PASSWORD: root
+    networks:
+      - backend

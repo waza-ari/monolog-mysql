@@ -14,19 +14,24 @@
     {
       "name": "Daniel Herrmann",
       "email": "daniel.herrmann1@gmail.com"
+    },
+    {
+      "name": "Clemens Bastian",
+      "email": "info@clemensbastian.de"
     }
   ],
   "require": {
-    "php": "^7.2",
+    "php": "^8.1",
     "ext-pdo": "*",
     "ext-pdo_mysql": "*",
-    "monolog/monolog": "^2.0"
+    "monolog/monolog": "^3.0"
   },
   "require-dev": {
-    "phpunit/phpunit": "^8.5",
-    "doctrine/dbal": "^2.10",
-    "psy/psysh": "^0.10.4",
-    "fzaninotto/faker": "^1.9"
+    "phpunit/phpunit": "^10.3",
+    "doctrine/dbal": "^3.6",
+    "psy/psysh": "^0.11",
+    "fakerphp/faker": "^1.23",
+    "hjerichen/dbunit": "^0.3.0"
   },
   "autoload": {
     "psr-4": {
